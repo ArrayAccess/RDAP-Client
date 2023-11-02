@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace ArrayAccess\RdapClient\Util;
 
 use function array_map;
+use function bin2hex;
 use function dechex;
 use function explode;
 use function hexdec;
@@ -12,14 +13,10 @@ use function inet_ntop;
 use function inet_pton;
 use function ip2long;
 use function is_numeric;
-use function is_string;
 use function long2ip;
-use function ltrim;
 use function min;
-use function pack;
 use function pow;
 use function preg_match;
-use function reset;
 use function str_contains;
 use function str_replace;
 use function str_split;
@@ -27,7 +24,6 @@ use function strlen;
 use function substr;
 use function substr_replace;
 use function trim;
-use function unpack;
 
 class CIDR
 {
@@ -38,31 +34,10 @@ class CIDR
         }
 
         $bin  = inet_pton($ip);
-        $pack = is_string($bin) ? unpack('H*', $bin) : false;
-        if (!empty($pack)) {
-            $hex = reset($pack);
-            $explodes = str_split($hex, 4);
-        } else {
-            $explodes = explode(':', $ip);
-            while (count($explodes) < 8) {
-                $explodes[] = '';
-            }
-            foreach ($explodes as &$ip) {
-                $ip = ltrim($ip, '0'); // trim zero
-                if ($ip === '') {
-                    $ip = '0000';
-                    continue;
-                }
-                if (!preg_match('~^[0-9a-f]{1,4}$~', $ip)) {
-                    return null;
-                }
-                while (strlen($ip) < 4) {
-                    $ip = "0$ip";
-                }
-            }
+        if ($bin === false) {
+            return null;
         }
-
-        return implode(':', $explodes);
+        return implode(':', str_split(bin2hex($bin), 4));
     }
 
     public static function normalizeIp4(string $arg): ?string
@@ -96,6 +71,7 @@ class CIDR
         if ($cidr === '') {
             return null;
         }
+        // remove whitespace
         $cidr = str_replace(' ', '', $cidr);
         $cidr = explode('/', $cidr);
         if (count($cidr) !== 2) {
@@ -131,6 +107,8 @@ class CIDR
         if ($cidr === '') {
             return null;
         }
+
+        // remove whitespace
         $cidr = str_replace(' ', '', $cidr);
         $cidr = explode('/', $cidr);
         if (count($cidr) !== 2) {
@@ -151,48 +129,33 @@ class CIDR
         if ($range < 0 || $range > 128) {
             return null;
         }
-        // Parse the address into a binary string
         $firstAddrBin = inet_pton($firstAddr);
-        // Convert the binary string to a string with hexadecimal characters
-        # unpack() can be replaced with bin2hex()
-        # unpack() is used for symmetry with pack() below
-        $pack = unpack('H*', $firstAddrBin);
-        $firstAddrHex = reset($pack);
-        // Overwriting first address string to make sure notation is optimal
-        // $firstAddr = inet_ntop($firstAddrBin);
-        // Calculate the number of 'flexible' bits
+        // fail return null
+        if ($firstAddrBin === false) {
+            return null;
+        }
         $flexBits = 128 - $range;
-
         // Build the hexadecimal string of the last address
-        $lastAddrHex = $firstAddrHex;
-        // We start at the end of the string (which is always 32 characters long)
+        $lastAddrHex = bin2hex($firstAddrBin);
+        // start at the end of the string (which is always 32 characters long)
         $pos = 31;
         while ($flexBits > 0) {
             // Get the character at this position
             $orig = substr($lastAddrHex, $pos, 1);
             // Convert it to an integer
             $originalVal = hexdec($orig);
-
             // OR it with (2^flexBits)-1, with flexBits limited to 4 at a time
             $newVal = $originalVal | (pow(2, min(4, $flexBits)) - 1);
-
             // Convert it back to a hexadecimal character
             $new = dechex($newVal);
-
             // And put that character back in the string
             $lastAddrHex = substr_replace($lastAddrHex, $new, $pos, 1);
-
-            // We processed one nibble, move to previous position
+            // process one nibble, move to previous position
             $flexBits -= 4;
             $pos -= 1;
         }
 
-        // Convert the hexadecimal string to a binary string
-        # Using pack() here
-        # Newer PHP version can use hex2bin()
-        $lastAddrBin = pack('H*', $lastAddrHex);
-        // And create an IPv6 address from the binary string
-        $lastAddr = inet_ntop($lastAddrBin);
+        $lastAddr = implode(':', str_split($lastAddrHex, 4));
         return [$firstAddr, $lastAddr];
     }
 
