@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="TrayDigita Coding Standard" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="vendor/squizlabs/php_codesniffer/phpcs.xsd">
+    <description>Php RDAP-Client Coding Standard</description>
+    <!-- Display Progress -->
+    <arg value="p"/>
+    <!-- Show Ruleset -->
+    <arg value="s"/>
+    <!-- Encoding -->
+    <arg name="encoding" value="UTF-8"/>
+    <!-- Extension -->
+    <arg name="extensions" value="php"/>
+    <!-- parallel -->
+    <arg name="parallel" value="200"/>
+
+    <!-- Use Colorized Output -->
+    <arg name="colors"/>
+    <!-- Rule Set -->
+    <rule ref="PSR2"/>
+    <!-- preventing duplicate class name -->
+    <rule ref="Generic.Classes.DuplicateClassName"/>
+    <!-- must have line ending -->
+    <rule ref="Generic.Files.LineEndings"/>
+    <!-- array must be use short syntax array() == [] -->
+    <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
+
+    <!-- Path To Check -->
+    <file>src/</file>
+    <!-- Slevomat Ruleset -->
+    <config name="installed_paths" value="vendor/slevomat/coding-standard/SlevomatCodingStandard"/>
+    <!-- detect spacing -->
+    <rule ref="SlevomatCodingStandard.Namespaces.UseSpacing">
+        <properties>
+            <property name="linesCountAfterLastUse" value="1"/>
+            <property name="linesCountBeforeFirstUse" value="1"/>
+            <property name="linesCountAfterLastUse" value="1"/>
+            <property name="linesCountBetweenUseTypes" value="0"/>
+        </properties>
+    </rule>
+    <!-- Require presence of declare(strict_types=1) & lines ruleset -->
+    <rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes">
+        <properties>
+            <property name="declareOnFirstLine" value="false"/>
+            <property name="spacesCountAroundEqualsSign" value="0"/>
+            <property name="linesCountAfterDeclare" value="1"/>
+            <property name="linesCountBeforeDeclare" value="0"/>
+        </properties>
+    </rule>
+    <!-- detect unused variables -->
+    <rule ref="SlevomatCodingStandard.Variables.UnusedVariable">
+        <properties>
+            <property name="ignoreUnusedValuesWhenOnlyKeysAreUsedInForeach" value="true"/>
+        </properties>
+    </rule>
+    <!-- we use strict! disallow equal operator, use identical for better code -->
+    <rule ref="SlevomatCodingStandard.Operators.DisallowEqualOperators"/>
+</ruleset>
+<!-- end -->
