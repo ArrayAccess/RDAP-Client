@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace ArrayAccess\RdapClient\Util;
 
-use function array_map;
 use function bin2hex;
 use function dechex;
 use function explode;
@@ -18,9 +17,7 @@ use function min;
 use function pow;
 use function preg_match;
 use function str_contains;
-use function str_replace;
 use function str_split;
-use function strlen;
 use function substr;
 use function substr_replace;
 use function trim;
@@ -29,12 +26,10 @@ class CIDR
 {
     public static function normalizeIp6(string $ip) :?string
     {
-        if (!preg_match('~^[a-f0-9]{0,4}(?::[a-f0-9]{0,4}){0,7}$~', $ip)) {
+        if (!str_contains($ip, ':')) {
             return null;
         }
-
-        $bin  = inet_pton($ip);
-        if ($bin === false) {
+        if (($bin = inet_pton($ip)) === false) {
             return null;
         }
         return implode(':', str_split(bin2hex($bin), 4));
@@ -42,23 +37,32 @@ class CIDR
 
     public static function normalizeIp4(string $arg): ?string
     {
-        $ips = explode('.', $arg);
-        if (count($ips) > 4) {
+        $arg = trim($arg);
+        if ($arg === '') {
             return null;
         }
-
+        $ips = explode('.', $arg, 4);
+        foreach ($ips as $k => $ip) {
+            if ($ip === '') {
+                $ips[$k] = 0;
+                continue;
+            }
+            if ($ip === '0') {
+                continue;
+            }
+            if (str_contains($ip, '.')
+                || ! is_numeric($ip)
+                || ($ip = (int) $ip) < 0
+                || $ip > 255
+            ) {
+                return null;
+            }
+            $ips[$k] = $ip;
+        }
         while (count($ips) < 4) {
             $ips[] = "0";
         }
-        $ips = array_map(static fn($i) => $i === '' ? "0" : $i, $ips);
-        $arg = implode(".", $ips);
-        $length  = strlen($arg);
-        if ($length < 7 // 0.0.0.0 -> 7
-            || $length > 15 // 255.255.255.255 -> 15
-        ) {
-            return null;
-        }
-        return self::filter($arg);
+        return implode(".", $ips);
     }
 
     /**
@@ -67,30 +71,22 @@ class CIDR
      */
     public static function ip4CidrToRange(string $cidr): ?array
     {
-        $cidr = trim($cidr);
-        if ($cidr === '') {
+        if (count(($cidr = explode('/', trim($cidr)))) !== 2) {
             return null;
         }
-        // remove whitespace
-        $cidr = str_replace(' ', '', $cidr);
-        $cidr = explode('/', $cidr);
-        if (count($cidr) !== 2) {
-            return null;
-        }
-
-        $ip = $cidr[0];
-        $range = $cidr[1];
-        if (!is_numeric($range)
-            || strlen($range) > 2
+        $ip    = trim($cidr[0]);
+        $range = trim($cidr[1]);
+        if ($ip === ''
+            || $range === ''
+            || !is_numeric($range)
             || str_contains($range, '.')
+            || $range > 32
+            || $range < 0
             || !($ip = self::normalizeIp4($ip))
         ) {
             return null;
         }
         $range = (int) $range;
-        if ($range < 0 || $range > 32) {
-            return null;
-        }
         return [
             long2ip((ip2long($ip)) & ((-1 << (32 - $range)))),
             long2ip((ip2long($ip)) + pow(2, (32 - $range)) - 1)
@@ -103,30 +99,19 @@ class CIDR
      */
     public static function ip6cidrToRange(string $cidr) : ?array
     {
-        $cidr = trim($cidr);
-        if ($cidr === '') {
+        if (count(($cidr = explode('/', trim($cidr)))) !== 2) {
             return null;
         }
-
-        // remove whitespace
-        $cidr = str_replace(' ', '', $cidr);
-        $cidr = explode('/', $cidr);
-        if (count($cidr) !== 2) {
-            return null;
-        }
-
-        // Split in address and prefix length
-        [$firstAddr, $range] = $cidr;
-        if (!is_numeric($range)
-            || strlen($range) > 2
+        $ip    = trim($cidr[0]);
+        $range = trim($cidr[1]);
+        if ($ip === ''
+            || $range === ''
             || str_contains($range, '.')
-            || !($firstAddr = self::normalizeIp6($firstAddr))
+            || !is_numeric($range)
+            || $range < 0
+            || $range > 128
+            || !($firstAddr = self::normalizeIp6($ip))
         ) {
-            return null;
-        }
-
-        $range = (int) $range;
-        if ($range < 0 || $range > 128) {
             return null;
         }
         $firstAddrBin = inet_pton($firstAddr);
@@ -134,7 +119,7 @@ class CIDR
         if ($firstAddrBin === false) {
             return null;
         }
-        $flexBits = 128 - $range;
+        $flexBits = 128 - ((int) $range);
         // Build the hexadecimal string of the last address
         $lastAddrHex = bin2hex($firstAddrBin);
         // start at the end of the string (which is always 32 characters long)
