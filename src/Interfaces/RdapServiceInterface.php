@@ -38,8 +38,6 @@ interface RdapServiceInterface
 
     public function remove(string $definition);
 
-    // public function isValidTarget(string $target) : bool;
-
     public function getRdapURL(string $target) : ?string;
 
     public function normalize(string $target) : ?string;
