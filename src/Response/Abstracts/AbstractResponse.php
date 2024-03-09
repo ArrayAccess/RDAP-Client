@@ -70,4 +70,9 @@ abstract class AbstractResponse implements RdapResponseInterface
     {
         return $this->protocol;
     }
+
+    public function jsonSerialize() : mixed
+    {
+        return json_decode($this->getResponseJson(), true);
+    }
 }

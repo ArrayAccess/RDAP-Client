@@ -85,7 +85,7 @@ class RdapRequestProtocol implements RdapRequestInterface
         // validate target
         $path = array_pop($targetUrl);
         $searchPath = rtrim($this->getProtocol()->getSearchPath(), '/');
-        if (str_ends_with($searchPath, $path)) {
+        if (!str_ends_with($searchPath, $path)) {
             throw new MismatchProtocolBehaviorException(
                 'Target RDAP search path is mismatch'
             );

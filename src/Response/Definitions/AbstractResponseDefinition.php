@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace ArrayAccess\RdapClient\Response\Definitions;
 
 use ArrayAccess\RdapClient\Exceptions\InvalidDataTypeException;
+use ArrayAccess\RdapClient\Exceptions\MismatchProtocolBehaviorException;
 use ArrayAccess\RdapClient\Interfaces\RdapRequestInterface;
 use ArrayAccess\RdapClient\Interfaces\RdapResponseDefinitionInterface;
 use ArrayAccess\RdapClient\Interfaces\RdapResponseInterface;
@@ -651,18 +652,35 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
         }
         $this->relatedRequest = false;
         foreach (($this->getLinks()?->getLinks()??[]) as $link) {
-            if ($link->getRel()?->getPlainData() === 'related'
-                && ($url = $link->getHref()?->getPlainData())
-            ) {
-                return $this->relatedRequest = $this
-                    ->getRdapResponseObject()
-                    ->getRequest()
-                    ->withRdapSearchURL($url);
+            if ($link->getRel()?->getPlainData() !== 'related') {
+                continue;
+            }
+            $url = $link->getValue()?->getPlainData();
+            if ($url && ($this->relatedRequest = $this->createObjectRdapRequestURL($url)??false)) {
+                return $this->relatedRequest;
+            }
+            $url = $link->getHref()?->getPlainData();
+            if ($url && ($this->relatedRequest = $this->createObjectRdapRequestURL($url)??false)) {
+                return $this->relatedRequest;
             }
         }
         return null;
     }
 
+    private function createObjectRdapRequestURL(?string $url): ?RdapRequestInterface
+    {
+        if ($url && preg_match('~^https?://~i', $url)) {
+            try {
+                return $this
+                    ->getRdapResponseObject()
+                    ->getRequest()
+                    ->withRdapSearchURL($url);
+            } catch (MismatchProtocolBehaviorException) {
+            }
+        }
+
+        return null;
+    }
     public function __set(string $name, $value): void
     {
         // pass

@@ -33,7 +33,7 @@ class RdapCustomConformanceData implements RdapResponseDataNamedInterface
 
     public function rootOnly(): bool
     {
-        return true;
+        return false;
     }
 
     public function getAllowedKeys(): ?array

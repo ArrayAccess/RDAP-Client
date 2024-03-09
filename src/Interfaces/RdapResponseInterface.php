@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace ArrayAccess\RdapClient\Interfaces;
 
-interface RdapResponseInterface
+use JsonSerializable;
+
+interface RdapResponseInterface extends JsonSerializable
 {
     const CONTENT_TYPE = 'application/rdap+json';
 

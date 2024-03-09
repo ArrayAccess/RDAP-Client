@@ -92,9 +92,17 @@ class Client implements RdapClientInterface
         if (!$target) {
             return null;
         }
-        if (str_contains($target, ':')) {
-            $target = CIDR::filterIp6($target);
-            return $target ? [self::IPV6, $target] : null;
+        if (str_contains($target, '/') && ($cidr = CIDR::cidrToRange($target))) {
+            if (str_contains($cidr[0], ':') || str_contains($cidr[1], ':')) {
+                if ($target = CIDR::filterIp6($cidr[0])) {
+                    return [self::IPV6, $target];
+                }
+            }
+            if (str_contains($cidr[0], '.') || str_contains($cidr[1], '.')) {
+                if ($target = CIDR::filterIp4($cidr[0])) {
+                    return [self::IPV4, $target];
+                }
+            }
         }
         if (preg_match('~^(?:ASN?)?([0-9]+)$~i', $target, $match)) {
             $target = $match[1] > 0 && $match[1] <= AsnService::MAX_INTEGER
@@ -102,11 +110,14 @@ class Client implements RdapClientInterface
                 : null;
             return $target ? [self::ASN, $target] : null;
         }
-        if ($ip4 = CIDR::filterIp4($target)) {
-            return [self::IPV4, $ip4];
+        if (str_contains($target, ':') && ($ip6 = CIDR::filterIp6($target))) {
+            return [self::IPV6, $ip6];
         }
         if (!str_contains($target, '.')) {
             return null;
+        }
+        if ($ip4 = CIDR::filterIp4($target)) {
+            return [self::IPV4, $ip4];
         }
         $target = idn_to_ascii($target)?:null;
         if (!$target) {
