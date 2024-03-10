@@ -45,7 +45,7 @@ class Ipv4Service extends AbstractRdapService
             && ((int) $explode[1]) <= 32
             && str_contains($explode[0], '.')
             && strlen($explode[0]) <= 15
-            && strlen($explode[0]) <= 7
+            && strlen($explode[0]) >= 7
             && ($_target = $this->normalize($explode[0]))
         ) {
             return "$_target/$explode[1]";
@@ -110,6 +110,9 @@ class Ipv4Service extends AbstractRdapService
 
     public function normalize(string $target): ?string
     {
+        if (str_contains($target, '/')) {
+            return $this->normalizeSource($target);
+        }
         if (!preg_match(
             '~^(?:[01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])(?:\.(?:[01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])){3}$~x',
             $target

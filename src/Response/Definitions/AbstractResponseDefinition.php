@@ -655,9 +655,9 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
             if ($link->getRel()?->getPlainData() !== 'related') {
                 continue;
             }
-            $url = $link->getValue()?->getPlainData();
-            if ($url && ($this->relatedRequest = $this->createObjectRdapRequestURL($url)??false)) {
-                return $this->relatedRequest;
+            $type = $link->getType()?->getPlainData();
+            if (!$type || !str_contains($type, 'application/rdap+json')) {
+                continue;
             }
             $url = $link->getHref()?->getPlainData();
             if ($url && ($this->relatedRequest = $this->createObjectRdapRequestURL($url)??false)) {

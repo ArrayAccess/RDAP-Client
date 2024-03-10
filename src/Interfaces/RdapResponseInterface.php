@@ -19,6 +19,8 @@ interface RdapResponseInterface extends JsonSerializable
 
     public function getResponseJson(): string;
 
+    public function getResponseArray() : array;
+
     public function getRequest(): RdapRequestInterface;
 
     public function getProtocol(): RdapProtocolInterface;

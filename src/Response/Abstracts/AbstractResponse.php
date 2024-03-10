@@ -19,10 +19,24 @@ abstract class AbstractResponse implements RdapResponseInterface
 {
     use AllowedKeyDataTraits;
 
+    /**
+     * @var string original response JSON
+     */
     protected string $responseJson;
 
+    /**
+     * @var array decoded json
+     */
+    protected array $responseArray = [];
+
+    /**
+     * @var RdapRequestInterface request object
+     */
     protected RdapRequestInterface $request;
 
+    /**
+     * @var RdapProtocolInterface protocol object
+     */
     protected RdapProtocolInterface $protocol;
 
     public function __construct(
@@ -54,11 +68,17 @@ abstract class AbstractResponse implements RdapResponseInterface
                 'Response is not valid json content'
             );
         }
+        $this->responseArray = $responseJson;
     }
 
     public function getResponseJson(): string
     {
         return $this->responseJson;
+    }
+
+    public function getResponseArray(): array
+    {
+        return $this->responseArray;
     }
 
     public function getRequest(): RdapRequestInterface
@@ -71,8 +91,8 @@ abstract class AbstractResponse implements RdapResponseInterface
         return $this->protocol;
     }
 
-    public function jsonSerialize() : mixed
+    public function jsonSerialize() : array
     {
-        return json_decode($this->getResponseJson(), true);
+        return $this->responseArray;
     }
 }

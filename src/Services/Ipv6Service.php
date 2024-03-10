@@ -35,6 +35,9 @@ class Ipv6Service extends AbstractRdapService
         if (str_contains($target, ':')) {
             return null;
         }
+        if (str_contains($target, '/')) {
+            return $this->normalizeSource($target);
+        }
         $target = CIDR::filter($target);
         if (!$target) {
             return null;

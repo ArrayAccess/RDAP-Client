@@ -94,12 +94,12 @@ class Client implements RdapClientInterface
         }
         if (str_contains($target, '/') && ($cidr = CIDR::cidrToRange($target))) {
             if (str_contains($cidr[0], ':') || str_contains($cidr[1], ':')) {
-                if ($target = CIDR::filterIp6($cidr[0])) {
+                if (CIDR::filterIp6($cidr[0]) && CIDR::filterIp6($cidr[1])) {
                     return [self::IPV6, $target];
                 }
             }
             if (str_contains($cidr[0], '.') || str_contains($cidr[1], '.')) {
-                if ($target = CIDR::filterIp4($cidr[0])) {
+                if (CIDR::filterIp4($cidr[0]) && CIDR::filterIp4($cidr[1])) {
                     return [self::IPV4, $target];
                 }
             }
