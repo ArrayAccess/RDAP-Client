@@ -24,6 +24,12 @@ use function trim;
 
 class CIDR
 {
+    /**
+     * Normalize ip6 address
+     *
+     * @param string $ip ip address
+     * @return string|null normalized ip address
+     */
     public static function normalizeIp6(string $ip) :?string
     {
         if (!str_contains($ip, ':')) {
@@ -35,6 +41,12 @@ class CIDR
         return implode(':', str_split(bin2hex($bin), 4));
     }
 
+    /**
+     * Normalize ip4 address
+     *
+     * @param string $arg ip address
+     * @return string|null normalized ip address
+     */
     public static function normalizeIp4(string $arg): ?string
     {
         $arg = trim($arg);
@@ -66,6 +78,8 @@ class CIDR
     }
 
     /**
+     * Convert ip4 cidr to range
+     *
      * @param string $cidr
      * @return ?array{0:string, 1:string}
      */
@@ -87,13 +101,21 @@ class CIDR
             return null;
         }
         $range = (int) $range;
-        return [
-            long2ip((ip2long($ip)) & ((-1 << (32 - $range)))),
-            long2ip((ip2long($ip)) + pow(2, (32 - $range)) - 1)
-        ];
+        $ipLong = ip2long($ip);
+        if ($ipLong === false) {
+            return null;
+        }
+        $first = long2ip(($ipLong) & ((-1 << (32 - $range))));
+        $last  = long2ip(($ipLong) + pow(2, (32 - $range)) - 1);
+        if (!$first || !$last) {
+            return null;
+        }
+        return [$first, $last];
     }
 
     /**
+     * Convert ip6 cidr to range
+     *
      * @param string $cidr
      * @return ?array{0:string, 1:string}
      */
@@ -145,17 +167,24 @@ class CIDR
     }
 
     /**
+     * Convert cidr to range
+     *
      * @param string $cidr
      * @return ?array{0:string, 1:string}
      */
     public static function cidrToRange(string $cidr) : ?array
     {
-        if (str_contains($cidr, ':')) {
-            return self::ip6cidrToRange($cidr);
-        }
-        return self::ip4cidrToRange($cidr);
+        return str_contains($cidr, ':')
+            ? self::ip6CidrToRange($cidr)
+            : self::ip4CidrToRange($cidr);
     }
 
+    /**
+     * Normalize ip address
+     *
+     * @param string $ip
+     * @return string|null
+     */
     public static function normalize(string $ip): ?string
     {
         $ip = trim($ip);
@@ -168,6 +197,12 @@ class CIDR
         return self::normalizeIp4($ip);
     }
 
+    /**
+     * Filter ip6 address
+     *
+     * @param string $ip
+     * @return string|null
+     */
     public static function filterIp6(string $ip): ?string
     {
         $ip = trim($ip);
@@ -175,9 +210,15 @@ class CIDR
             return null;
         }
         $bin = inet_pton($ip);
-        return $bin !== false ? inet_ntop($bin) : null;
+        return $bin !== false ? (inet_ntop($bin)?:null) : null;
     }
 
+    /**
+     * Filter ip4 address
+     *
+     * @param string $ip
+     * @return string|null
+     */
     public static function filterIp4(string $ip): ?string
     {
         $ip = trim($ip);
@@ -185,15 +226,23 @@ class CIDR
             return null;
         }
         $bin = ip2long($ip);
-        return $bin !== false ? long2ip($bin) : null;
+        return $bin !== false ? (long2ip($bin)?:null) : null;
     }
 
+    /**
+     * Filter ip address
+     *
+     * @param string $ip
+     * @return string|null
+     */
     public static function filter(string $ip): ?string
     {
         return self::filterIp6($ip)??self::filterIp4($ip);
     }
 
     /**
+     * Check if ip is in range
+     *
      * @param string $ip
      * @param string $startIP
      * @param string $endIP
@@ -208,6 +257,8 @@ class CIDR
     }
 
     /**
+     * Check if ip is in range cidr
+     *
      * @param string $ip
      * @param string $cidr
      * @return bool
@@ -218,7 +269,6 @@ class CIDR
         if (!$cidr) {
             return false;
         }
-
         return self::inRange($ip, $cidr[0], $cidr[1]);
     }
 }
