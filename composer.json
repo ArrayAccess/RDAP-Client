@@ -1,15 +1,30 @@
 {
     "name": "arrayaccess/rdap-client",
-    "description": "Php - Registration Data Access Protocol (RDAP) Client",
+    "description": "Registration Data Access Protocol (RDAP) Client For PHP",
     "license": ["GPL-3.0-or-later"],
     "keywords": [
         "rdap",
         "whois",
         "rdap-client",
         "rdap-php",
+        "php-rdap",
         "asn",
         "ip",
         "nameserver"
+    ],
+    "authors": [
+        {
+            "name": "ArrayIterator",
+            "email": "me@arrayiterator.com",
+            "homepage": "https://www.arrayiterator.com",
+            "role": "developer"
+        }
+    ],
+    "funding": [
+        {
+            "type": "github",
+            "url": "https://github.com/sponsors/arrayiterator"
+        }
     ],
     "require": {
         "php": ">= 8.1",
@@ -17,8 +32,9 @@
         "ext-json": "*"
     },
     "require-dev": {
-        "squizlabs/php_codesniffer": "^3.7.2",
-        "slevomat/coding-standard": "^8.13"
+        "squizlabs/php_codesniffer": "^3.11.2",
+        "phpstan/phpstan": "^2.1.0",
+        "slevomat/coding-standard": "^8.15.0"
     },
     "config": {
         "allow-plugins": {
