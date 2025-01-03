@@ -8,9 +8,24 @@ use ArrayAccess\RdapClient\Response\Data\EventAction;
 use ArrayAccess\RdapClient\Response\Data\EventActor;
 use ArrayAccess\RdapClient\Response\Data\EventDate;
 use ArrayAccess\RdapClient\Response\Data\Links;
+use ArrayIterator;
+use IteratorAggregate;
+use Traversable;
 
-class EventsCollection extends AbstractRdapResponseDataRecursiveArrayEmptyName
+/**
+ * @template-implements IteratorAggregate<array{
+ *     eventAction?: EventAction,
+ *     eventActor?: EventActor,
+ *     eventDate?: EventDate,
+ *     links?: Links,
+ * }>
+ * @template-implements IteratorAggregate<string, EventAction|EventActor|EventDate|Links>
+ */
+class EventsCollection extends AbstractRdapResponseDataRecursiveArrayEmptyName implements IteratorAggregate
 {
+    /**
+     * @var array<array-key, string> $allowedKeys
+     */
     protected array $allowedKeys = [
         'eventAction', // required
         'eventActor',
@@ -18,43 +33,87 @@ class EventsCollection extends AbstractRdapResponseDataRecursiveArrayEmptyName
         'links',
     ];
 
+    /**
+     * @var array{
+     *     eventAction?: EventAction,
+     *     eventActor?: EventActor,
+     *     eventDate?: EventDate,
+     *     links?: Links,
+     * } $values
+     */
+    protected array $values = [];
+
     public function __construct(EventActor|EventAction|EventDate|Links ...$data)
     {
-        $this->values = [
-            'eventAction' => null,
-            'eventActor' => null,
-            'eventDate' => null,
-            'links' => null,
-        ];
         foreach ($data as $action) {
-            $this->values[$action->getName()] = $action;
-        }
-        foreach ($this->values as $key => $value) {
-            // skip required
-            if ($value || $key === 'eventAction' || $key === 'eventDate') {
+            if ($action instanceof EventActor) {
+                $this->values['eventActor'] = $action;
                 continue;
             }
-            unset($this->values[$key]);
+            if ($action instanceof EventDate) {
+                $this->values['eventDate'] = $action;
+                continue;
+            }
+            if ($action instanceof Links) {
+                $this->values['links'] = $action;
+                continue;
+            }
+            $this->values['eventAction'] = $action;
         }
+        $this->values = array_filter($this->values);
     }
 
+    /**
+     * @return EventAction|null
+     */
     public function getAction() : ?EventAction
     {
         return $this->values['eventAction']??null;
     }
 
+    /**
+     * @return EventActor|null
+     */
     public function getActor() : ?EventActor
     {
         return $this->values['eventActor']??null;
     }
 
+    /**
+     * @return EventDate|null
+     */
     public function getDate() : ?EventDate
     {
         return $this->values['eventDate']??null;
     }
 
+    /**
+     * @return Links|null
+     */
     public function getLinks() : ?Links
     {
         return $this->values['links']??null;
+    }
+
+    /**
+     * @return array{
+     *      eventAction?: EventAction,
+     *      eventActor?: EventActor,
+     *      eventDate?: EventDate,
+     *      links?: Links,
+     *  }
+     */
+    public function getValues(): array
+    {
+        return $this->values;
+    }
+
+    /**
+     * @return Traversable<"eventAction"|"eventActor"|"eventDate"|"links", EventAction|EventActor|EventDate|Links>
+     * @return Traversable<string, EventAction|EventActor|EventDate|Links>
+     */
+    public function getIterator(): Traversable
+    {
+        return new ArrayIterator($this->getValues());
     }
 }
