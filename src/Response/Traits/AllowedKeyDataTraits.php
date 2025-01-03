@@ -8,7 +8,7 @@ use function is_array;
 trait AllowedKeyDataTraits
 {
     /**
-     * @return ?array<string>
+     * @return ?array<array-key, string>
      */
     public function getAllowedKeys() : ?array
     {

@@ -9,12 +9,17 @@ use ArrayAccess\RdapClient\Interfaces\RdapRequestInterface;
 use ArrayAccess\RdapClient\Interfaces\RdapResponseInterface;
 use ArrayAccess\RdapClient\Response\Ipv6Response;
 use ArrayAccess\RdapClient\Services\Ipv6Service;
-use Exception;
 use function get_class;
 use function sprintf;
 
 class IPv6Protocol extends AbstractIPProtocol
 {
+    /**
+     * Create a new IPv6 protocol
+     *
+     * @param RdapClientInterface $client
+     * @param Ipv6Service|null $service
+     */
     public function __construct(RdapClientInterface $client, ?Ipv6Service $service = null)
     {
         parent::__construct($client);
@@ -22,19 +27,34 @@ class IPv6Protocol extends AbstractIPProtocol
             $this->services = $service;
         }
     }
+
+    /**
+     * Set the service
+     *
+     * @param Ipv6Service $service
+     * @return void
+     */
     public function setService(Ipv6Service $service): void
     {
         $this->services = $service;
     }
 
     /**
-     * @throws Exception
+     * @return Ipv6Service
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     * @throws \Exception
      */
     public function getService(): Ipv6Service
     {
-        return $this->services ??= Ipv6Service::fromURL(self::IPV6_URI);
+        if (!isset($this->services) || !($this->services instanceof Ipv6Service)) {
+            $this->services = Ipv6Service::fromURL(self::IPV6_URI);
+        }
+        return $this->services;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function createResponse(string $response, RdapRequestInterface $request): RdapResponseInterface
     {
         if ($request->getProtocol() !== $this) {

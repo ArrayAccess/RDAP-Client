@@ -21,48 +21,85 @@ use function stream_context_create;
 
 class RdapRequestProtocol implements RdapRequestInterface
 {
+    /**
+     * @var string $target The target
+     */
     protected string $target;
 
+    /**
+     * @var RdapProtocolInterface $protocol The RDAP protocol
+     */
     protected RdapProtocolInterface $protocol;
 
+    /**
+     * @var RdapResponseInterface|null $response The RDAP response
+     */
     protected ?RdapResponseInterface $response = null;
 
+    /**
+     * @var int $errorCode The error code
+     */
     private int $errorCode = 0;
 
-    private string $errorMessage = '';
+    /**
+     * @var ?string $errorMessage The error message
+     */
+    private ?string $errorMessage = null;
+
+    /**
+     * @var string|null $rdapSearchURL The RDAP search URL
+     */
     private ?string $rdapSearchURL = null;
 
+    /**
+     * @inheritDoc
+     */
     public function __construct(string $target, RdapProtocolInterface $protocol)
     {
         $this->target = $target;
         $this->protocol = $protocol;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getProtocol(): RdapProtocolInterface
     {
         return $this->protocol;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getTarget(): string
     {
         return $this->target;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getErrorCode(): int
     {
         return $this->errorCode;
     }
 
-    public function getErrorMessage(): string
+    public function getErrorMessage(): ?string
     {
         return $this->errorMessage;
     }
 
+    /**
+     * @return string|null The RDAP search URL
+     */
     public function getRdapSearchURL(): ?string
     {
         return $this->rdapSearchURL;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function withRdapSearchURL(string $url) : static
     {
         $obj = clone $this;
@@ -80,10 +117,15 @@ class RdapRequestProtocol implements RdapRequestInterface
         $targetUrl = rtrim($targetUrl, '/');
         $targetUrl = explode('/', $targetUrl);
         // change the target
-        $obj->target = array_pop($targetUrl);
+        $obj->target = (string) array_pop($targetUrl);
 
         // validate target
         $path = array_pop($targetUrl);
+        if (!$path) {
+            throw new RuntimeException(
+                'Could not get RDAP search path from URL'
+            );
+        }
         $searchPath = rtrim($this->getProtocol()->getSearchPath(), '/');
         if (!str_ends_with($searchPath, $path)) {
             throw new MismatchProtocolBehaviorException(
@@ -95,6 +137,7 @@ class RdapRequestProtocol implements RdapRequestInterface
     }
 
     /**
+     * @inheritDoc
      * @return RdapResponseInterface
      */
     public function getResponse(): RdapResponseInterface
@@ -102,21 +145,23 @@ class RdapRequestProtocol implements RdapRequestInterface
         if ($this->response) {
             return $this->response;
         }
+
         $this->rdapSearchURL ??= $this->getProtocol()->getFindURL($this->getTarget());
         if (!$this->rdapSearchURL) {
             throw new RuntimeException(
                 sprintf('Could not get Rdap URL for %s', $this->getTarget())
             );
         }
-        if ($this->errorCode !== 0 || $this->errorMessage !== '') {
+        if ($this->errorCode !== 0 || $this->errorMessage) {
             throw new RdapRemoteRequestException(
-                $this->errorMessage,
+                $this->errorMessage??'',
                 $this->errorCode
             );
         }
-        set_error_handler(function ($code, $message) {
+        set_error_handler(function (int $code, string $message, string $file, int $line) : bool {
             $this->errorCode = $code;
             $this->errorMessage = $message;
+            return true;
         });
         $context = RdapRequestInterface::DEFAULT_STREAM_CONTEXT;
         $content = file_get_contents(
@@ -129,7 +174,7 @@ class RdapRequestProtocol implements RdapRequestInterface
         restore_error_handler();
         if (!$content) {
             throw new RdapRemoteRequestException(
-                $this->errorMessage,
+                $this->errorMessage??'Could not get RDAP response',
                 $this->errorCode
             );
         }

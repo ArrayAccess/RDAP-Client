@@ -7,7 +7,13 @@ interface RdapResponseDataRecursiveNamedInterface extends
     RdapResponseDataRecursiveInterface,
     RdapResponseDataNamedInterface
 {
+    /**
+     * @return string
+     */
     public function getName() : string;
 
+    /**
+     * @return RdapResponseDataInterface|array|RdapResponseDataInterface[]
+     */
     public function getValues() : RdapResponseDataInterface|array;
 }

@@ -5,5 +5,9 @@ namespace ArrayAccess\RdapClient\Interfaces\ResponseData;
 
 interface RdapResponseDataNamedInterface extends RdapResponseDataInterface
 {
+    /**
+     * @inheritDoc
+     * @return string
+     */
     public function getName() : string;
 }

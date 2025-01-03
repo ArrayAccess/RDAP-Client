@@ -9,12 +9,17 @@ use ArrayAccess\RdapClient\Interfaces\RdapRequestInterface;
 use ArrayAccess\RdapClient\Interfaces\RdapResponseInterface;
 use ArrayAccess\RdapClient\Response\AsnResponse;
 use ArrayAccess\RdapClient\Services\AsnService;
-use Exception;
 use function get_class;
 use function sprintf;
 
 class AsnProtocol extends AbstractRdapProtocol
 {
+    /**
+     * Constructor
+     *
+     * @param RdapClientInterface $client
+     * @param AsnService|null $service
+     */
     public function __construct(RdapClientInterface $client, ?AsnService $service = null)
     {
         parent::__construct($client);
@@ -24,11 +29,16 @@ class AsnProtocol extends AbstractRdapProtocol
     }
 
     /**
-     * @throws Exception
+     * @return AsnService
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     * @throws \Exception
      */
     public function getService(): AsnService
     {
-        return $this->services ??= AsnService::fromURL(self::ASN_URI);
+        if (!isset($this->services) || !$this->services instanceof AsnService) {
+            $this->services = AsnService::fromURL(self::ASN_URI);
+        }
+        return $this->services;
     }
 
     /**
@@ -40,6 +50,13 @@ class AsnProtocol extends AbstractRdapProtocol
         return '/autnum';
     }
 
+    /**
+     * Create response object
+     *
+     * @param string $response
+     * @param RdapRequestInterface $request
+     * @return RdapResponseInterface
+     */
     public function createResponse(string $response, RdapRequestInterface $request): RdapResponseInterface
     {
         if ($request->getProtocol() !== $this) {

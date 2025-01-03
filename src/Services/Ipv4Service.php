@@ -10,16 +10,27 @@ use function explode;
 use function is_array;
 use function is_numeric;
 use function preg_match;
+use function reset;
 use function str_contains;
 use function str_ends_with;
 use function str_starts_with;
+use function strlen;
 
 class Ipv4Service extends AbstractRdapService
 {
+    /**
+     * @var array<string, array{0:string, 1:string}|false> $cidrRanges The RDAP services
+     */
     private array $cidrRanges = [];
 
+    /**
+     * @var bool $addedRecovered The RDAP services
+     */
     private bool $addedRecovered = false;
 
+    /**
+     * @inheritDoc
+     */
     public function __construct(
         string $version,
         string $description,
@@ -33,6 +44,9 @@ class Ipv4Service extends AbstractRdapService
         }
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function normalizeSource(string $target): string
     {
         // 255.255.255.255 -> 15 chars
@@ -53,6 +67,10 @@ class Ipv4Service extends AbstractRdapService
         $this->throwInvalidTarget($target);
     }
 
+    /**
+     * Add the recovered IPv4 addresses
+     * @return $this
+     */
     public function addRecoveredIpv4(): static
     {
         if ($this->addedRecovered) {
@@ -69,6 +87,9 @@ class Ipv4Service extends AbstractRdapService
         return $this;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getRdapURL(string $target) : ?string
     {
         $target = $this->normalize($target);
@@ -95,7 +116,7 @@ class Ipv4Service extends AbstractRdapService
                     continue;
                 }
                 if (!isset($this->cidrRanges[$cidr])) {
-                    $this->cidrRanges[$cidr] = CIDR::cidrToRange($cidr);
+                    $this->cidrRanges[$cidr] = CIDR::cidrToRange($cidr)?:false;
                 }
                 if (!is_array($this->cidrRanges[$cidr])) {
                     continue;
@@ -108,6 +129,9 @@ class Ipv4Service extends AbstractRdapService
         return null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function normalize(string $target): ?string
     {
         if (str_contains($target, '/')) {

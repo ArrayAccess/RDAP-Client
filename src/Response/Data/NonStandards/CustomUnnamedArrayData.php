@@ -11,22 +11,29 @@ class CustomUnnamedArrayData implements RdapResponseDataInterface
     use AllowedKeyDataTraits;
 
     /**
-     * @var CustomNamedData[]|CustomUnNamedData[]
+     * @var array<array-key, CustomNamedData|CustomUnNamedData>
      */
     protected array $data;
 
+    /**
+     * @inheritDoc
+     * @return false
+     */
     public function rootOnly() : bool
     {
         return false;
     }
 
+    /**
+     * @param CustomNamedData|CustomUnNamedData ...$data
+     */
     public function __construct(
         CustomNamedData|CustomUnNamedData...$data
     ) {
         $this->data = [];
         foreach ($data as $item) {
             $name = $item->getName();
-            if ($name === null) {
+            if (!$name) {
                 $this->data[] = $item;
                 continue;
             }
@@ -34,20 +41,33 @@ class CustomUnnamedArrayData implements RdapResponseDataInterface
         }
     }
 
+    /**
+     * @inheritDoc
+     * @return void
+     */
     public function getName(): void
     {
     }
 
+    /**
+     * @return array<array-key, CustomNamedData|CustomUnNamedData>
+     */
     public function getValues(): array
     {
         return $this->data;
     }
 
+    /**
+     * @return array<array-key, CustomNamedData|CustomUnNamedData>
+     */
     public function jsonSerialize(): array
     {
         return $this->data;
     }
 
+    /**
+     * @return array<array-key, mixed>
+     */
     public function getPlainData(): array
     {
         /** @noinspection DuplicatedCode */

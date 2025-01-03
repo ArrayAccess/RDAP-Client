@@ -7,15 +7,29 @@ use JsonSerializable;
 
 interface RdapResponseDataInterface extends JsonSerializable
 {
+    /**
+     * Determine if the data is root only
+     * @return bool
+     */
     public function rootOnly() : bool;
 
+    /**
+     * @return array<array-key, string>|null
+     */
     public function getAllowedKeys() : ?array;
 
-    public function getName();
+    /**
+     * Get name
+     */
+    public function getName(); // @phpstan-ignore-line
 
-    public function getValues();
+    /**
+     * Get values of the data
+     */
+    public function getValues(); // @phpstan-ignore-line
 
-    public function jsonSerialize(): mixed;
-
-    public function getPlainData();
+    /**
+     * Get plain data
+     */
+    public function getPlainData(); // @phpstan-ignore-line
 }

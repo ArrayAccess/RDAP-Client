@@ -10,6 +10,9 @@ use ArrayIterator;
 use IteratorAggregate;
 use Traversable;
 
+/**
+ * @template-implements IteratorAggregate<array-key, mixed>
+ */
 abstract class AbstractRdapResponseDataRecursiveArrayEmptyName implements
     RdapResponseDataRecursiveEmptyNameInterface,
     IteratorAggregate
@@ -17,29 +20,44 @@ abstract class AbstractRdapResponseDataRecursiveArrayEmptyName implements
     use AllowedKeyDataTraits;
 
     /**
-     * @var array<mixed|RdapResponseDataInterface>
+     * @var array<array-key, mixed|RdapResponseDataInterface>
      */
     protected array $values;
 
+    /**
+     * @inheritDoc
+     */
     final public function getName(): void
     {
     }
 
+    /**
+     * @inheritDoc
+     */
     public function rootOnly() : bool
     {
         return false;
     }
 
+    /**
+     * @return array<array-key, mixed>
+     */
     public function getValues(): array
     {
         return $this->values;
     }
 
+    /**
+     * @return array<array-key, mixed>
+     */
     public function jsonSerialize(): array
     {
         return $this->getValues();
     }
 
+    /**
+     * @return array<array-key, mixed>
+     */
     public function getPlainData(): array
     {
         /** @noinspection DuplicatedCode */
@@ -59,6 +77,9 @@ abstract class AbstractRdapResponseDataRecursiveArrayEmptyName implements
         return $values;
     }
 
+    /**
+     * @return Traversable<array-key, mixed>
+     */
     public function getIterator(): Traversable
     {
         return new ArrayIterator($this->getValues());

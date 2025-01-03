@@ -7,8 +7,15 @@ use ArrayAccess\RdapClient\Response\Data\Abstracts\AbstractRdapResponseDataRecur
 
 class VCardsDefinitions extends AbstractRdapResponseDataRecursiveArrayEmptyName
 {
+    /**
+     * @var ?array<array-key, VCardDefinition> $allowedKeys
+     */
     protected ?array $allowedKeys = null;
 
+    /**
+     * @param VCardDefinition $vCardDefinition
+     * @param VCardDefinition ...$vCardDefinitions
+     */
     public function __construct(
         VCardDefinition $vCardDefinition,
         VCardDefinition ...$vCardDefinitions

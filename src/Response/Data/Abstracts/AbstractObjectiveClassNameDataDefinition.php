@@ -6,8 +6,15 @@ namespace ArrayAccess\RdapClient\Response\Data\Abstracts;
 use ArrayAccess\RdapClient\Interfaces\ResponseData\RdapResponseDataNamedInterface;
 use ArrayAccess\RdapClient\Response\Data\ObjectClassName;
 
+/**
+ * @template T of string
+ */
 abstract class AbstractObjectiveClassNameDataDefinition extends AbstractRdapResponseDataRecursiveArrayEmptyName
 {
+
+    /**
+     * @param RdapResponseDataNamedInterface ...$values
+     */
     public function __construct(
         RdapResponseDataNamedInterface ...$values
     ) {
@@ -22,8 +29,14 @@ abstract class AbstractObjectiveClassNameDataDefinition extends AbstractRdapResp
         }
     }
 
+    /**
+     * @return ObjectClassName<T>
+     */
     abstract public function getObjectClassName(): ObjectClassName;
 
+    /**
+     * @return array<array-key, mixed>
+     */
     public function getPlainData(): array
     {
         $values = [

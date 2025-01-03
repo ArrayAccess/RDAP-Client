@@ -9,12 +9,15 @@ use ArrayAccess\RdapClient\Interfaces\RdapRequestInterface;
 use ArrayAccess\RdapClient\Interfaces\RdapResponseInterface;
 use ArrayAccess\RdapClient\Response\DomainResponse;
 use ArrayAccess\RdapClient\Services\DomainService;
-use Exception;
 use function get_class;
 use function sprintf;
 
 class DomainProtocol extends AbstractRdapProtocol
 {
+    /**
+     * @param RdapClientInterface $client
+     * @param DomainService|null $service
+     */
     public function __construct(RdapClientInterface $client, ?DomainService $service = null)
     {
         parent::__construct($client);
@@ -23,17 +26,28 @@ class DomainProtocol extends AbstractRdapProtocol
         }
     }
 
+    /**
+     * Set service
+     *
+     * @param DomainService $service
+     * @return void
+     */
     public function setService(DomainService $service): void
     {
         $this->services = $service;
     }
 
     /**
-     * @throws Exception
+     * @return DomainService
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     * @throws \Exception
      */
     public function getService(): DomainService
     {
-        return $this->services ??= DomainService::fromURL(self::DOMAIN_URI);
+        if (!isset($this->services) || !($this->services instanceof DomainService)) {
+            $this->services = DomainService::fromURL(self::DOMAIN_URI);
+        }
+        return $this->services;
     }
 
     /**
@@ -45,6 +59,13 @@ class DomainProtocol extends AbstractRdapProtocol
         return '/domain';
     }
 
+    /**
+     * Create response object
+     *
+     * @param string $response
+     * @param RdapRequestInterface $request
+     * @return RdapResponseInterface
+     */
     public function createResponse(string $response, RdapRequestInterface $request): RdapResponseInterface
     {
         if ($request->getProtocol() !== $this) {

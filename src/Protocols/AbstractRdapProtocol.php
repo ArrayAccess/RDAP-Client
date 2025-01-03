@@ -14,29 +14,50 @@ use function str_contains;
 
 abstract class AbstractRdapProtocol implements RdapProtocolInterface
 {
+    /**
+     * @var string $name The name of the protocol
+     */
     protected string $name;
 
+    /**
+     * @var RdapServiceInterface $services The RDAP service
+     */
     protected RdapServiceInterface $services;
 
+    /**
+     * @inheritDoc
+     */
     public function __construct(protected RdapClientInterface $client)
     {
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getClient(): RdapClientInterface
     {
         return $this->client;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getName(): string
     {
         return $this->name;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getService(): RdapServiceInterface
     {
         return $this->services;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getFindURL(string $target): string
     {
         $normalize = $this->getService()->normalize($target);
@@ -60,6 +81,9 @@ abstract class AbstractRdapProtocol implements RdapProtocolInterface
         return rtrim($url, '/') . "/$path/$normalize";
     }
 
+    /**
+     * @inheritDoc
+     */
     public function find(string $target): ?RdapRequestInterface
     {
         return new RdapRequestProtocol($target, $this);

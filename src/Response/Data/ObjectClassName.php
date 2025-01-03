@@ -8,16 +8,20 @@ use ArrayAccess\RdapClient\Response\Data\Abstracts\AbstractRdapResponseDataStrin
 use Stringable;
 
 /**
- * @template T of string|Stringable
+ * @template T of string
  */
 class ObjectClassName extends AbstractRdapResponseDataString implements RdapResponseDataObjectDataClassNameInterface
 {
     protected string $name = 'objectClassName';
 
+    /**
+     * @var bool $nullable
+     */
     protected bool $nullable = false;
 
     /**
-     * @param string<T>|Stringable<T> $data
+     * @param string|Stringable $data
+     * @phpstan-param T $data
      */
     public function __construct(string|Stringable $data)
     {
@@ -25,10 +29,15 @@ class ObjectClassName extends AbstractRdapResponseDataString implements RdapResp
     }
 
     /**
-     * @return string<T>
+     * @return string
+     * @phpstan-return T
      */
     public function getValues(): string
     {
-        return $this->values;
+        $tReturn = $this->values;
+        /**
+         * @var T $tReturn
+         */
+        return (string) $tReturn;
     }
 }

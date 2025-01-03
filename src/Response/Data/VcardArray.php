@@ -8,8 +8,14 @@ use ArrayAccess\RdapClient\Response\Data\Definitions\VCardsDefinitions;
 
 class VcardArray extends AbstractRdapResponseDataRecursiveArray
 {
+    /**
+     * @var string $name
+     */
     protected string $name = 'vcardArray';
 
+    /**
+     * @param VCardsDefinitions ...$definitions
+     */
     public function __construct(VCardsDefinitions ...$definitions)
     {
         $this->values = ['vcard'];
@@ -18,6 +24,10 @@ class VcardArray extends AbstractRdapResponseDataRecursiveArray
         }
     }
 
+    /**
+     * @inheritDoc
+     * @return false
+     */
     public function rootOnly() : bool
     {
         return false;

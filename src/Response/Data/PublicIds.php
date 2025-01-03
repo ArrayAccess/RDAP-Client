@@ -9,10 +9,19 @@ use function array_values;
 
 class PublicIds extends AbstractRdapResponseDataRecursiveArray
 {
+    /**
+     * @var string $name
+     */
     protected string $name = 'publicIds';
 
+    /**
+     * @var array<array-key, string>|null $allowedKeys
+     */
     protected ?array $allowedKeys = null;
 
+    /**
+     * @param PublicIdsDefinitions ...$data
+     */
     public function __construct(PublicIdsDefinitions ...$data)
     {
         $this->values = array_values($data);

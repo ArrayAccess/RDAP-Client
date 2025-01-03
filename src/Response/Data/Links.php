@@ -8,8 +8,14 @@ use function array_values;
 
 class Links extends AbstractRdapResponseDataRecursiveArray
 {
+    /**
+     * @var string $name
+     */
     protected string $name = 'links';
 
+    /**
+     * @param Link ...$links
+     */
     public function __construct(
         Link...$links
     ) {

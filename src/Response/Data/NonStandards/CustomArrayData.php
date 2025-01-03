@@ -15,11 +15,19 @@ class CustomArrayData implements RdapResponseDataInterface
      */
     protected array $data;
 
+    /**
+     * @inheritDoc
+     * @return false
+     */
     public function rootOnly() : bool
     {
         return false;
     }
 
+    /**
+     * @param string $name
+     * @param CustomNamedData|CustomUnNamedData ...$data
+     */
     public function __construct(
         protected string $name,
         CustomNamedData|CustomUnNamedData...$data
@@ -27,7 +35,7 @@ class CustomArrayData implements RdapResponseDataInterface
         $this->data = [];
         foreach ($data as $item) {
             $name = $item->getName();
-            if ($name === null) {
+            if (!$name) {
                 $this->data[] = $item;
                 continue;
             }
@@ -35,21 +43,34 @@ class CustomArrayData implements RdapResponseDataInterface
         }
     }
 
+    /**
+     * @inheritDoc
+     * @return string
+     */
     public function getName(): string
     {
         return $this->name;
     }
 
+    /**
+     * @return array<array-key, CustomNamedData|CustomUnNamedData>
+     */
     public function getValues(): array
     {
         return $this->data;
     }
 
+    /**
+     * @return array<array-key, CustomNamedData|CustomUnNamedData>
+     */
     public function jsonSerialize(): array
     {
         return $this->data;
     }
 
+    /**
+     * @return array<array-key, mixed>
+     */
     public function getPlainData(): array
     {
         /** @noinspection DuplicatedCode */

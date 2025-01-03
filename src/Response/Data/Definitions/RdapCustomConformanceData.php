@@ -16,9 +16,13 @@ class RdapCustomConformanceData implements RdapResponseDataNamedInterface
 
     protected ?RdapResponseDataInterface $values = null;
 
+    /**
+     * @param string $name
+     * @param mixed $data
+     */
     public function __construct(
         protected string $name,
-        $data
+        mixed $data
     ) {
         if (is_array($data) || is_iterable($data)) {
             $values = [];
@@ -31,32 +35,52 @@ class RdapCustomConformanceData implements RdapResponseDataNamedInterface
         $this->values = new CustomUnNamedData($data);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function rootOnly(): bool
     {
         return false;
     }
 
+
+    /**
+     * @inheritDoc
+     * @return ?array<array-key, mixed>
+     */
     public function getAllowedKeys(): ?array
     {
         return null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getValues(): ?RdapResponseDataInterface
     {
         return $this->values;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function jsonSerialize(): ?RdapResponseDataInterface
     {
         return $this->getValues();
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getName(): string
     {
         return $this->name;
     }
 
-    public function getPlainData()
+    /**
+     * @inheritDoc
+     */
+    public function getPlainData() : mixed
     {
         return $this->getValues()?->getPlainData();
     }

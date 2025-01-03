@@ -17,17 +17,32 @@ abstract class AbstractRdapResponseDataString implements
 {
     use AllowedKeyDataTraits;
 
+    /**
+     * @var string $name The name of the class
+     */
     protected string $name;
 
+    /**
+     * @var string|Stringable|null $values The values of the class
+     */
     protected string|Stringable|null $values;
 
+    /**
+     * @var bool $nullable The nullable of the class
+     */
     protected bool $nullable = true;
 
+    /**
+     * @inheritDoc
+     */
     public function rootOnly() : bool
     {
         return false;
     }
 
+    /**
+     * @return string The name of the class
+     */
     public function getName(): string
     {
         if (!isset($this->name)) {
@@ -37,11 +52,18 @@ abstract class AbstractRdapResponseDataString implements
         return $this->name;
     }
 
+    /**
+     * @return string|Stringable|null
+     */
     public function getValues(): string|Stringable|null
     {
         return $this->values;
     }
 
+    /**
+     * @inheritDoc
+     * @return ?string
+     */
     public function getStringData(): ?string
     {
         $data = $this->getValues();
@@ -50,22 +72,36 @@ abstract class AbstractRdapResponseDataString implements
             : (string) $data;
     }
 
-    protected function isNullable() : bool
+    /**
+     * @return bool
+     */
+    public function isNullable() : bool
     {
         return $this->nullable;
     }
 
-    public function jsonSerialize(): Stringable|string
+    /**
+     * @inheritDoc
+     * @return Stringable|string|null
+     */
+    public function jsonSerialize(): Stringable|string|null
     {
         return $this->getStringData();
     }
 
+    /**
+     * @inheritDoc
+     * @return string
+     */
     public function __toString(): string
     {
         return (string) $this->getStringData();
     }
 
-    public function getPlainData()
+    /**
+     * @return mixed
+     */
+    public function getPlainData() : mixed
     {
         return $this->values instanceof RdapResponseDataInterface
             ? $this->values->getPlainData()

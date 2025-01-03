@@ -11,6 +11,9 @@ use ArrayAccess\RdapClient\Response\Data\ObjectClassName;
 
 class NameServersDefinition extends AbstractRdapResponseDataRecursiveArrayEmptyName
 {
+    /**
+     * @param RdapResponseDataNamedInterface ...$values
+     */
     public function __construct(
         RdapResponseDataNamedInterface ...$values
     ) {
@@ -20,16 +23,25 @@ class NameServersDefinition extends AbstractRdapResponseDataRecursiveArrayEmptyN
         $this->values['objectClassName'] ??= new ObjectClassName('nameserver');
     }
 
+    /**
+     * @return LdhName|null
+     */
     public function getLdhName() : ?LdhName
     {
         return $this->values['ldhName']??null;
     }
 
+    /**
+     * @return ObjectClassName<"nameserver">
+     */
     public function getObjectClassName() : ObjectClassName
     {
         return $this->values['objectClassName'];
     }
 
+    /**
+     * @return IpAddresses|null
+     */
     public function getIpAddresses() : ?IpAddresses
     {
         return $this->values['ipAddresses']??null;

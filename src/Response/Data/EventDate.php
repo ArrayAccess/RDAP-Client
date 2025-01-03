@@ -7,5 +7,8 @@ use ArrayAccess\RdapClient\Response\Data\Abstracts\AbstractDateData;
 
 class EventDate extends AbstractDateData
 {
+    /**
+     * @var string $name
+     */
     protected string $name = 'eventDate';
 }

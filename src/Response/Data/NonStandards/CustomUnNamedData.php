@@ -11,32 +11,55 @@ class CustomUnNamedData implements RdapResponseDataInterface
 {
     use AllowedKeyDataTraits;
 
+    /**
+     * @var mixed $values
+     */
     protected mixed $values;
 
+    /**
+     * @inheritDoc
+     * @return false
+     */
     public function rootOnly() : bool
     {
         return false;
     }
 
-    public function __construct($data)
+    /**
+     * @param mixed $data
+     */
+    public function __construct(mixed $data)
     {
         $this->values = $data;
     }
 
+    /**
+     * @inheritDoc
+     * @return void
+     */
     public function getName(): void
     {
     }
 
+    /***
+     * @return mixed
+     */
     public function getValues() : mixed
     {
         return $this->values;
     }
 
+    /**
+     * @return mixed
+     */
     public function jsonSerialize() : mixed
     {
         return $this->values;
     }
 
+    /**
+     * @return array<array-key, mixed>
+     */
     public function getPlainData(): array
     {
         /** @noinspection DuplicatedCode */

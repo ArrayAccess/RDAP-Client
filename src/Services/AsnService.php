@@ -10,20 +10,23 @@ use function preg_match;
 use function reset;
 use function str_contains;
 use function strtolower;
+use function trim;
 
 class AsnService extends AbstractRdapService
 {
-    const MAX_INTEGER = 4294967296;
+    public const MAX_INTEGER = 4294967296;
 
+    /**
+     * @inheritDoc
+     */
     protected function normalizeSource(string $target) : string
     {
         if (str_contains($target, '.')) {
             $this->throwInvalidTarget($target);
         }
-        if (is_numeric($target) && !str_contains($target, '.')) {
+        if (is_numeric($target)) {
             return $target;
         }
-
         $explode = explode('-', $target);
         // xx-xxx
         if (count($explode) !== 2) {
@@ -41,6 +44,9 @@ class AsnService extends AbstractRdapService
         return $target;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function normalize(string $target) : ?string
     {
         $target = trim($target);
@@ -55,6 +61,9 @@ class AsnService extends AbstractRdapService
         return $integer > 0 && $integer <= self::MAX_INTEGER ? $match[1] : null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getRdapURL(string|int $target): ?string
     {
         $target = $this->normalize((string) $target);

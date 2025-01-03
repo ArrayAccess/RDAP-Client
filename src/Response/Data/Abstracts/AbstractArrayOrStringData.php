@@ -13,37 +13,60 @@ abstract class AbstractArrayOrStringData implements RdapResponseDataNamedInterfa
 {
     use AllowedKeyDataTraits;
 
+    /**
+     * @var string $name name of the data
+     */
     protected string $name;
 
+    /**
+     * @var array<array-key, mixed>|string|Stringable $values
+     */
     protected array|string|Stringable $values;
 
-    public function __construct($data)
+    /**
+     * @param array<array-key, mixed>|string|Stringable $data
+     */
+    public function __construct(array|string|Stringable $data)
     {
         $this->values = $data;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function rootOnly() : bool
     {
         return false;
     }
 
+    /**
+     * @return string
+     */
     public function getName(): string
     {
         return $this->name;
     }
 
+    /**
+     * @return array<array-key, mixed>|string|Stringable
+     */
     public function getValues(): array|string|Stringable
     {
         return $this->values;
     }
 
+    /**
+     * @return array<array-key, mixed>|string|Stringable
+     */
     public function jsonSerialize() : array|string|Stringable
     {
         return $this->getValues();
     }
 
-
-    public function getPlainData()
+    /**
+     * @return array<array-key, mixed>|string|Stringable
+     */
+    public function getPlainData() : array|string|Stringable
     {
         /** @noinspection DuplicatedCode */
         if (is_array($this->values)) {

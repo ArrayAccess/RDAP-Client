@@ -7,13 +7,23 @@ use ArrayAccess\RdapClient\Response\Data\Abstracts\AbstractRdapResponseDataRecur
 
 class SecureDNS extends AbstractRdapResponseDataRecursiveArray
 {
+    /**
+     * @var string $name
+     */
     protected string $name = 'secureDNS';
 
+    /**
+     * @var string[] $allowedKeys
+     */
     protected array $allowedKeys = [
         'delegationSigned',
         'ZoneSigned'
     ];
 
+    /**
+     * Constructor
+     * @param ZoneSigned|DelegationSigned|DsData ...$signed
+     */
     public function __construct(
         ZoneSigned|DelegationSigned|DsData...$signed
     ) {

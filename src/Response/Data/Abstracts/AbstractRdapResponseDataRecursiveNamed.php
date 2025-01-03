@@ -11,31 +11,52 @@ abstract class AbstractRdapResponseDataRecursiveNamed implements RdapResponseDat
 {
     use AllowedKeyDataTraits;
 
+    /**
+     * @var string $name Response name
+     */
     protected string $name;
 
+    /**
+     * @var RdapResponseDataInterface $values Response data
+     */
     protected RdapResponseDataInterface $values;
 
+    /**
+     * @inheritDoc
+     */
     public function rootOnly() : bool
     {
         return false;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getName(): string
     {
         return $this->name;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getValues(): RdapResponseDataInterface
     {
         return $this->values;
     }
 
+    /**
+     * @return RdapResponseDataInterface
+     */
     public function jsonSerialize() : RdapResponseDataInterface
     {
         return $this->getValues();
     }
 
-    public function getPlainData()
+    /**
+     * @inheritDoc
+     */
+    public function getPlainData() : mixed
     {
         return $this->getValues()->getPlainData();
     }

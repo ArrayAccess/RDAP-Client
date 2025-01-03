@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace ArrayAccess\RdapClient\Services;
 
+use function end;
 use function explode;
 use function idn_to_ascii;
 use function in_array;
@@ -10,9 +11,13 @@ use function reset;
 use function str_contains;
 use function strlen;
 use function strtolower;
+use function trim;
 
 class DomainService extends AbstractRdapService
 {
+    /**
+     * @inheritDoc
+     */
     protected function normalizeSource(string $target): string
     {
         if (str_contains($target, '.')) {
@@ -33,6 +38,9 @@ class DomainService extends AbstractRdapService
         return $ascii;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function normalize(string $target) : ?string
     {
         $target = strtolower(trim($target));
@@ -55,6 +63,9 @@ class DomainService extends AbstractRdapService
         return $target;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getRdapURL(string $target): ?string
     {
         $target = $this->normalize($target);

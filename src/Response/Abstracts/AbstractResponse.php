@@ -25,7 +25,7 @@ abstract class AbstractResponse implements RdapResponseInterface
     protected string $responseJson;
 
     /**
-     * @var array decoded json
+     * @var array<array-key, mixed> decoded json
      */
     protected array $responseArray = [];
 
@@ -39,6 +39,12 @@ abstract class AbstractResponse implements RdapResponseInterface
      */
     protected RdapProtocolInterface $protocol;
 
+    /**
+     * Constructor
+     * @param string $responseJson
+     * @param RdapRequestInterface $request
+     * @param RdapProtocolInterface $protocol
+     */
     public function __construct(
         string $responseJson,
         RdapRequestInterface $request,
@@ -60,6 +66,11 @@ abstract class AbstractResponse implements RdapResponseInterface
         $this->protocol = $protocol;
     }
 
+    /**
+     * Assert response
+     * @param string $responseJson
+     * @return void
+     */
     private function assertResponse(string $responseJson): void
     {
         $responseJson = json_decode($responseJson, true);
@@ -71,26 +82,42 @@ abstract class AbstractResponse implements RdapResponseInterface
         $this->responseArray = $responseJson;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getResponseJson(): string
     {
         return $this->responseJson;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getResponseArray(): array
     {
         return $this->responseArray;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getRequest(): RdapRequestInterface
     {
         return $this->request;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getProtocol(): RdapProtocolInterface
     {
         return $this->protocol;
     }
 
+    /**
+     * @inheritDoc
+     * @return array<array-key, mixed>
+     */
     public function jsonSerialize() : array
     {
         return $this->responseArray;
