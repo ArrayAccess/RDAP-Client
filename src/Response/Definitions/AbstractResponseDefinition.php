@@ -9,11 +9,9 @@ use ArrayAccess\RdapClient\Interfaces\RdapRequestInterface;
 use ArrayAccess\RdapClient\Interfaces\RdapResponseDefinitionInterface;
 use ArrayAccess\RdapClient\Interfaces\RdapResponseInterface;
 use ArrayAccess\RdapClient\Interfaces\ResponseData\RdapResponseDataConformanceDataInterface;
-use ArrayAccess\RdapClient\Interfaces\ResponseData\RdapResponseDataConformanceInterface;
-use ArrayAccess\RdapClient\Interfaces\ResponseData\RdapResponseDataErrorCodeInterface;
 use ArrayAccess\RdapClient\Interfaces\ResponseData\RdapResponseDataInterface;
-use ArrayAccess\RdapClient\Interfaces\ResponseData\RdapResponseDataObjectDataClassNameInterface;
-use ArrayAccess\RdapClient\Protocols\RdapRequestProtocol;
+use ArrayAccess\RdapClient\Interfaces\ResponseData\RdapResponseDataNamedInterface;
+use ArrayAccess\RdapClient\Interfaces\ResponseData\RdapResponseDataStringableInterface;
 use ArrayAccess\RdapClient\Response\Data\Algorithm;
 use ArrayAccess\RdapClient\Response\Data\AsEventActor;
 use ArrayAccess\RdapClient\Response\Data\ContactURI;
@@ -90,6 +88,7 @@ use ArrayAccess\RdapClient\Response\Data\VcardArray;
 use ArrayAccess\RdapClient\Response\Data\ZoneSigned;
 use ArrayAccess\RdapClient\Response\Traits\AssertionTrait;
 use Throwable;
+use function array_filter;
 use function array_shift;
 use function array_values;
 use function get_object_vars;
@@ -107,38 +106,88 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
 {
     use AssertionTrait;
 
-    protected ?RdapResponseDataConformanceInterface $rdapConformance = null;
+    /**
+     * @var RdapConformance|null $rdapConformance The RDAP conformance
+     */
+    protected ?RdapConformance $rdapConformance = null;
 
-    protected ?RdapResponseDataObjectDataClassNameInterface $objectClassName = null;
+    /**
+     * @var ObjectClassName<string>|null $objectClassName The object class name
+     */
+    protected ?ObjectClassName $objectClassName = null;
 
+    /**
+     * The RDAP conformance data
+     * @var RdapResponseDataConformanceDataInterface<array-key, mixed>|null $rdapConformanceData
+     */
     protected ?RdapResponseDataConformanceDataInterface $rdapConformanceData = null;
 
-    protected ?RdapResponseDataErrorCodeInterface $errorCode = null;
+    /**
+     * @var ErrorCode|null $errorCode The error code
+     */
+    protected ?ErrorCode $errorCode = null;
 
+    /**
+     * @var Title|null $title The title
+     */
     protected ?Title $title = null;
 
+    /**
+     * @var Description|null $description The description
+     */
     protected ?Description $description = null;
 
+    /**
+     * @var Notices|null $notices The notices
+     */
     protected ?Notices $notices = null;
 
+    /**
+     * @var Lang|null $lang The lang
+     */
     protected ?Lang $lang = null;
 
+    /**
+     * @var Status|null $status The status
+     */
     protected ?Status $status = null;
 
+    /**
+     * @var Links|null $links The links
+     */
     protected ?Links $links = null;
 
+    /**
+     * @var Events|null $events The events
+     */
     protected ?Events $events = null;
 
+    /**
+     * @var Handle|null $handle The handle
+     */
     protected ?Handle $handle = null;
 
+    /**
+     * @var Entities|null $entities The entities
+     */
     protected ?Entities $entities = null;
 
+    /**
+     * @var Name|null $name The name
+     */
     protected ?Name $name = null;
 
-    protected RdapRequestProtocol|false|null $relatedRequest = null;
+    /**
+     * @var RdapRequestInterface|false|null $relatedRequest The related request
+     */
+    protected RdapRequestInterface|false|null $relatedRequest = null;
 
+    /**
+     * Constructor
+     * @param RdapResponseInterface $rdapResponseObject
+     */
     public function __construct(
-        protected RdapResponseInterface $rdapResponseObject,
+        protected RdapResponseInterface $rdapResponseObject
     ) {
         $json = json_decode($rdapResponseObject->getResponseJson(), true);
         if (!is_array($json)) {
@@ -165,22 +214,27 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
         }
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getRdapResponseObject(): RdapResponseInterface
     {
         return $this->rdapResponseObject;
     }
 
     /**
+     * Create object
+     *
      * @param string $keyName
-     * @param $valueData
+     * @param mixed $valueData
      * @param int $depth
-     * @return ?RdapResponseDataInterface
+     * @return RdapResponseDataInterface
      */
     protected function createObject(
         string $keyName,
-        $valueData,
+        mixed $valueData,
         int $depth
-    ) : ?RdapResponseDataInterface {
+    ) : RdapResponseDataInterface {
         switch ($keyName) {
             case 'rdapConformance':
             case 'status':
@@ -194,7 +248,6 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                     'status' => new Status(...$valueData),
                     'roles' => new Roles(...$valueData),
                     'description' => new Description(...$valueData),
-                    default => null
                 };
                 break;
             case 'objectClassName':
@@ -243,7 +296,6 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                     'ipVersion' => new IpVersion($valueData),
                     'digest' => new Digest($valueData),
                     'contact_URI' => new ContactURI($valueData),
-                    default => null
                 };
                 break;
             case 'startAutnum':
@@ -252,7 +304,6 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                 $data = match ($keyName) {
                     'startAutnum' => new StartAutNum($valueData),
                     'endAutnum' => new EndAutNum($valueData),
-                    default => null
                 };
                 break;
             case 'errorCode':
@@ -265,7 +316,6 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                     'keyTag' => new KeyTag($valueData),
                     'digestType' => new DigestType($valueData),
                     'algorithm' => new Algorithm($valueData),
-                    default => null
                 };
                 break;
             case 'link':
@@ -288,6 +338,15 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                 if ($hrefLang !== null) {
                     $values[] = new HrefLang(...$hrefLang);
                 }
+                $values = array_filter($values, static function ($item) {
+                    return $item instanceof HrefLang || $item instanceof Value
+                        || $item instanceof Rel
+                        || $item instanceof Href
+                        || $item instanceof Title
+                        || $item instanceof Media
+                        || $item instanceof Type;
+                });
+                $values = array_values($values);
                 $data = new Link(...$values);
                 break;
             case 'type':
@@ -321,12 +380,10 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                 if (($valueData['delegationSigned']??null) !== null) {
                     $this->assertBoolean($valueData['delegationSigned'], $keyName);
                     $data[] = new DelegationSigned($valueData['delegationSigned']);
-                }
-                if (($valueData['zoneSigned']??null) !== null) {
+                } elseif (($valueData['zoneSigned']??null) !== null) {
                     $this->assertBoolean($valueData['zoneSigned'], $keyName);
                     $data[] = new ZoneSigned($valueData['zoneSigned']);
-                }
-                if (($valueData['dsData']??null) !== null) {
+                } elseif (($valueData['dsData']??null) !== null) {
                     $this->assertArray($valueData['dsData'], $keyName);
                     $values = [];
                     foreach ($valueData['dsData'] as $item) {
@@ -336,6 +393,10 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                             $depth + 1
                         );
                     }
+                    $values = array_filter($values, static function ($item) {
+                        return $item instanceof DsDataDefinition;
+                    });
+                    $values = array_values($values);
                     $data[] = new DsData(...$values);
                 }
                 $data = new SecureDNS(...$data);
@@ -353,6 +414,9 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                         $depth + 1
                     );
                 }
+                $values = array_filter($values, static function ($item) {
+                    return $item instanceof VCardsDefinitions;
+                });
                 $data = new VcardArray(...$values);
                 break;
             case 'publicIds':
@@ -372,32 +436,64 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                     'remarks' => RemarksDefinition::class,
                     'publicIds' => PublicIdsDefinitions::class,
                     'networks' => NetworksDefinition::class,
-                    'links' => 'link',
+                    'links' => Link::class,
                     'events',
                     'asEventActor' => EventsCollection::class,
-                    default => null
                 };
                 $values = [];
-                if ($keyMatch) {
-                    foreach ($valueData as $item) {
-                        $values[] = $this->createObject(
-                            $keyMatch,
-                            $item,
-                            $depth + 1
-                        );
-                    }
+                foreach ($valueData as $item) {
+                    $values[] = $this->createObject(
+                        $keyMatch,
+                        $item,
+                        $depth + 1
+                    );
                 }
                 $data = match ($keyName) {
-                    'notices' => new Notices(...$values),
-                    'nameservers' => new NameServers(...$values),
-                    'entities' => new Entities(...$values),
-                    'remarks' => new Remarks(...$values),
-                    'publicIds' => new PublicIds(...$values),
-                    'events' => new Events(...$values),
-                    'links' => new Links(...$values),
-                    'asEventActor' => new AsEventActor(...$values),
-                    'networks' => new Networks(...$values),
-                    default => null
+                    'notices' => new Notices(...array_values(
+                        array_filter($values, static function ($item) {
+                            return $item instanceof NoticesDefinition;
+                        })
+                    )),
+                    'nameservers' => new NameServers(...array_values(
+                        array_filter($values, static function ($item) {
+                            return $item instanceof NameServersDefinition;
+                        })
+                    )),
+                    'entities' => new Entities(...array_values(
+                        array_filter($values, static function ($item) {
+                            return $item instanceof EntityDefinitionObjectClassName;
+                        })
+                    )),
+                    'remarks' => new Remarks(...array_values(
+                        array_filter($values, static function ($item) {
+                            return $item instanceof RemarksDefinition;
+                        })
+                    )),
+                    'publicIds' => new PublicIds(...array_values(
+                        array_filter($values, static function ($item) {
+                            return $item instanceof PublicIdsDefinitions;
+                        })
+                    )),
+                    'events' => new Events(...array_values(
+                        array_filter($values, static function ($item) {
+                            return $item instanceof EventsCollection;
+                        })
+                    )),
+                    'links' => new Links(...array_values(
+                        array_filter($values, static function ($item) {
+                            return $item instanceof Link;
+                        })
+                    )),
+                    'asEventActor' => new AsEventActor(...array_values(
+                        array_filter($values, static function ($item) {
+                            return $item instanceof EventsCollection;
+                        })
+                    )),
+                    'networks' => new Networks(...array_values(
+                        array_filter($values, static function ($item) {
+                            return $item instanceof NetworksDefinition;
+                        })
+                    )),
                 };
                 break;
             case 'domainSearchResults':
@@ -418,10 +514,21 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                     );
                 }
                 $data = match ($keyName) {
-                    'domainSearchResults' => new DomainSearchResults(...$values),
-                    'entitySearchResults' => new EntitySearchResults(...$values),
-                    'nameserverSearchResults' => new NameserverSearchResults(...$values),
-                    default => null
+                    'domainSearchResults' => new DomainSearchResults(...array_values(
+                        array_filter($values, static function ($item) {
+                            return $item instanceof DomainDefinitionObjectClassName;
+                        })
+                    )),
+                    'entitySearchResults' => new EntitySearchResults(...array_values(
+                        array_filter($values, static function ($item) {
+                            return $item instanceof EntityDefinitionObjectClassName;
+                        })
+                    )),
+                    'nameserverSearchResults' => new NameserverSearchResults(...array_values(
+                        array_filter($values, static function ($item) {
+                            return $item instanceof NameserverDefinitionObjectClassName;
+                        })
+                    )),
                 };
                 break;
             case EmptyObject::class:
@@ -438,11 +545,12 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                 $this->assertString($name);
                 // 1 -> object type or label
                 $object = array_shift($valueData);
+                // assert array
                 $this->assertArray($object);
                 // 3 -> type value
                 $typeValue = array_shift($valueData);
                 // should not empty
-                $valueData = array_values($valueData);
+                // $valueData = array_values($valueData);
                 $this->assertCountGreaterThan($valueData, 0);
                 foreach ($valueData as $val) {
                     $this->assertStringOrArray($val);
@@ -477,7 +585,9 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                     );
                     $values[] = $item;
                 }
-                $data= new VCardsDefinitions(...$values);
+                $data= new VCardsDefinitions(...array_values(array_filter($values, static function ($item) {
+                    return $item instanceof VCardDefinition;
+                })));
                 break;
             case PublicIdsDefinitions::class:
                 $this->assertArrayStringValue($valueData, $keyName);
@@ -490,7 +600,10 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                         $depth
                     );
                 }
-                $data = new PublicIdsDefinitions(...$values);
+                $data = new PublicIdsDefinitions(...array_values(array_filter($values, static function ($item) {
+                    return $item instanceof RdapResponseDataStringableInterface
+                        || $item instanceof  RdapResponseDataNamedInterface;
+                })));
                 break;
             case EventsCollection::class:
             case RemarksDefinition::class:
@@ -514,18 +627,70 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                 }
                 try {
                     $data = match ($keyName) {
-                        EntityDefinitionObjectClassName::class => new EntityDefinitionObjectClassName(...$values),
-                        RemarksDefinition::class => new RemarksDefinition(...$values),
-                        NetworksDefinition::class => new NetworksDefinition(...$values),
-                        NamedRecursiveObjectData::class => new NamedRecursiveObjectData(...$values),
-                        EventsCollection::class => new EventsCollection(...$values),
-                        NoticesDefinition::class => new NoticesDefinition(...$values),
-                        NameServersDefinition::class => new NameServersDefinition(...$values),
-                        DomainDefinitionObjectClassName::class => new DomainDefinitionObjectClassName(...$values),
-                        NameserverDefinitionObjectClassName::class => new NameserverDefinitionObjectClassName(...
-                            $values),
-                        DsDataDefinition::class => new DsDataDefinition(...$values),
-                        default => null
+                        EntityDefinitionObjectClassName::class => new EntityDefinitionObjectClassName(
+                            ...array_values(
+                                array_filter($values, static function ($item) {
+                                    return $item instanceof RdapResponseDataNamedInterface;
+                                })
+                            )
+                        ),
+                        RemarksDefinition::class => new RemarksDefinition(...array_values(
+                            array_filter($values, static function ($item) {
+                                return $item instanceof RdapResponseDataNamedInterface;
+                            })
+                        )),
+                        NetworksDefinition::class => new NetworksDefinition(...array_values(
+                            array_filter($values, static function ($item) {
+                                return $item instanceof RdapResponseDataNamedInterface;
+                            })
+                        )),
+                        NamedRecursiveObjectData::class => new NamedRecursiveObjectData(
+                            ...array_values(
+                                array_filter($values, static function ($item) {
+                                    return $item instanceof RdapResponseDataNamedInterface
+                                        || $item instanceof RdapResponseDataStringableInterface;
+                                })
+                            )
+                        ),
+                        EventsCollection::class => new EventsCollection(...array_values(
+                            array_filter($values, static function ($item) {
+                                return $item instanceof EventActor
+                                    || $item instanceof EventAction
+                                    || $item instanceof EventDate
+                                    || $item instanceof Links;
+                            })
+                        )),
+                        NoticesDefinition::class => new NoticesDefinition(...array_values(
+                            array_filter($values, static function ($item) {
+                                return $item instanceof RdapResponseDataNamedInterface;
+                            })
+                        )),
+                        NameServersDefinition::class => new NameServersDefinition(...array_values(
+                            array_filter($values, static function ($item) {
+                                return $item instanceof RdapResponseDataNamedInterface;
+                            })
+                        )),
+                        DomainDefinitionObjectClassName::class => new DomainDefinitionObjectClassName(
+                            ...array_values(
+                                array_filter($values, static function ($item) {
+                                    return $item instanceof RdapResponseDataNamedInterface;
+                                })
+                            )
+                        ),
+                        NameserverDefinitionObjectClassName::class => new NameserverDefinitionObjectClassName(
+                            ...array_values(
+                                array_filter($values, static function ($item) {
+                                    return $item instanceof RdapResponseDataNamedInterface;
+                                })
+                            )
+                        ),
+                        DsDataDefinition::class => new DsDataDefinition(
+                            ...array_values(
+                                array_filter($values, static function ($item) {
+                                    return $item instanceof RdapResponseDataNamedInterface;
+                                })
+                            )
+                        )
                     };
                 } catch (Throwable) {
                     print_r($values);
@@ -557,94 +722,141 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                 break;
         }
 
-        if ($depth > 0 && ($data??null)?->rootOnly()) {
+        if ($depth > 0 && $data->rootOnly()) {
             throw new InvalidDataTypeException(
                 sprintf(
                     'Data "%s" only allowed in root object. Data tree is on depth "%d"',
-                    ($data??null)?->getName(),
+                    $data->getName(),
                     $depth + 1
                 )
             );
         }
-
-        return $data??null;
+        return $data;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getRdapConformance(): ?RdapConformance
     {
         return $this->rdapConformance??null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getRdapConformanceData(): ?RdapResponseDataConformanceDataInterface
     {
         return $this->rdapConformanceData;
     }
 
+    /**
+     * @return ObjectClassName<string>|null
+     */
     public function getObjectClassName(): ?ObjectClassName
     {
         return $this->objectClassName??null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getErrorCode(): ?ErrorCode
     {
         return $this->errorCode??null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getTitle(): ?Title
     {
         return $this->title??null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getStatus(): ?Status
     {
         return $this->status??null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getDescription(): ?Description
     {
         return $this->description??null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getLang(): ?Lang
     {
         return $this->lang??null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getNotices(): ?Notices
     {
         return $this->notices??null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getLinks(): ?Links
     {
         return $this->links??null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getHandle(): ?Handle
     {
         return $this->handle??null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getEvents(): ?Events
     {
         return $this->events??null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getEntities(): ?Entities
     {
         return $this->entities??null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getName(): ?Name
     {
         return $this->name??null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function isError(): bool
     {
         return $this->getErrorCode() !== null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getRelatedRequest(): ?RdapRequestInterface
     {
         if ($this->relatedRequest !== null) {
@@ -656,7 +868,7 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
                 continue;
             }
             $type = $link->getType()?->getPlainData();
-            if (!$type || !str_contains($type, 'application/rdap+json')) {
+            if (!$type || !is_string($type) || !str_contains($type, 'application/rdap+json')) {
                 continue;
             }
             $url = $link->getHref()?->getPlainData();
@@ -667,6 +879,12 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
         return null;
     }
 
+    /**
+     * Create object from RDAP request URL
+     *
+     * @param string|null $url
+     * @return RdapRequestInterface|null
+     */
     private function createObjectRdapRequestURL(?string $url): ?RdapRequestInterface
     {
         if ($url && preg_match('~^https?://~i', $url)) {
@@ -681,16 +899,31 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
 
         return null;
     }
-    public function __set(string $name, $value): void
+
+    /**
+     * Prevent set object prop
+     *
+     * @param string $name
+     * @param mixed $value
+     * @return void
+     */
+    public function __set(string $name, mixed $value): void
     {
         // pass
     }
 
-    public function __get(string $name)
+    /**
+     * @param string $name
+     * @return mixed
+     */
+    public function __get(string $name) : mixed
     {
-        return property_exists($this, $name) ? $this->name : null;
+        return property_exists($this, $name) ? $this->{$name} : null;
     }
 
+    /**
+     * @return array<string, RdapResponseDataInterface>
+     */
     public function jsonSerialize(): array
     {
         $data = [];
@@ -710,8 +943,11 @@ abstract class AbstractResponseDefinition implements RdapResponseDefinitionInter
         return $data;
     }
 
+    /**
+     * @return string returns the JSON representation of the object
+     */
     public function __toString(): string
     {
-        return json_encode($this, JSON_UNESCAPED_SLASHES);
+        return json_encode($this, JSON_UNESCAPED_SLASHES)?:'';
     }
 }
