@@ -10,7 +10,7 @@ use ArrayAccess\RdapClient\Interfaces\RdapServiceInterface;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use Exception;
+use function array_key_exists;
 use function array_keys;
 use function array_merge;
 use function array_search;
@@ -31,30 +31,65 @@ use function is_string;
 use function is_writable;
 use function json_decode;
 use function md5;
+use function min;
 use function mkdir;
 use function preg_match;
 use function restore_error_handler;
+use function rtrim;
 use function set_error_handler;
 use function sprintf;
 use function str_starts_with;
 use function stream_context_create;
 use function sys_get_temp_dir;
+use function time;
 use function unlink;
 
 abstract class AbstractRdapService implements RdapServiceInterface
 {
+    /**
+     * @var DateTimeInterface $publication The publication date
+     */
     protected DateTimeInterface $publication;
 
+    /**
+     * @var string $version The version of the service
+     */
     protected string $version;
 
+    /**
+     * @var string $description The description of the service
+     */
     protected string $description;
 
+    /**
+     * @var array<int, array<array-key, array<array-key, string>>> $services The services
+     */
     protected array $services = [];
 
+    /**
+     * @var string|null $tempDir The temporary directory
+     */
     private static ?string $tempDir = null;
 
     /**
-     * @throws Exception
+     * @var int<60, 604800> $cacheExpirations The cache expiration time
+     */
+    private static int $cacheExpirations = 3600;
+
+    /**
+     * The maximum expiration time default in 7 days
+     */
+    public const MAX_EXPIRES = 604800;
+
+    /**
+     * Constructor
+     *
+     * @param string $version
+     * @param string $description
+     * @param string|DateTimeInterface $publication
+     * @param array<array-key, string[][]> $services
+     * @throws \Exception
+     * @noinspection PhpFullyQualifiedNameUsageInspection
      */
     public function __construct(
         string $version,
@@ -66,12 +101,37 @@ abstract class AbstractRdapService implements RdapServiceInterface
         $this->setDescription($description);
         $this->setPublication(
             is_string($publication)
-            ? new DateTimeImmutable($publication)
-            : DateTimeImmutable::createFromInterface($publication)
+                ? new DateTimeImmutable($publication)
+                : DateTimeImmutable::createFromInterface($publication)
         );
         $this->setServices($services);
     }
 
+    /**
+     * @return int<60, 604800>
+     */
+    public static function cacheExpirations(): int
+    {
+        return self::$cacheExpirations;
+    }
+
+    /**
+     * Set the expiration time
+     *
+     * @param int<60, 604800> $expires
+     * @return void
+     */
+    public function setCacheExpirations(int $expires): void
+    {
+        self::$cacheExpirations = max(min($expires, self::MAX_EXPIRES), 60);
+    }
+
+    /**
+     * Set the services
+     *
+     * @param array<string[][]> $services
+     * @throws InvalidServiceDefinitionException
+     */
     public function setServices(array $services): void
     {
         $serviceArray = [];
@@ -105,11 +165,20 @@ abstract class AbstractRdapService implements RdapServiceInterface
         $this->services = $serviceArray;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getServices(): array
     {
         return $this->services;
     }
 
+    /**
+     * Create targets
+     *
+     * @param string ...$target
+     * @return array<array-key, string>
+     */
     private function createTargets(string ...$target): array
     {
         $targets = [];
@@ -123,6 +192,10 @@ abstract class AbstractRdapService implements RdapServiceInterface
         return array_keys($targets);
     }
 
+
+    /**
+     * @inheritDoc
+     */
     public function throwInvalidTarget(string $target) : never
     {
         throw new InvalidServiceDefinitionException(
@@ -131,12 +204,20 @@ abstract class AbstractRdapService implements RdapServiceInterface
     }
 
     /**
+     * Normalize the source
+     *
      * @param string $target
      * @return string
      * @throws InvalidServiceDefinitionException
      */
     abstract protected function normalizeSource(string $target): string;
 
+    /**
+     * Get the offset
+     *
+     * @param string $rdapURL
+     * @return int|null
+     */
     protected function getOffset(string $rdapURL) : ?int
     {
         $offset = null;
@@ -152,6 +233,9 @@ abstract class AbstractRdapService implements RdapServiceInterface
         return $offset;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function prepend(string $rdapURL, string ...$target): void
     {
         $offset = $this->getOffset($rdapURL);
@@ -167,6 +251,9 @@ abstract class AbstractRdapService implements RdapServiceInterface
         array_unshift($this->services, [$targets, [$rdapURL]]);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function append(string $rdapURL, string ...$target): void
     {
         $offset = $this->getOffset($rdapURL);
@@ -182,6 +269,9 @@ abstract class AbstractRdapService implements RdapServiceInterface
         $this->services[] = [$targets, [$rdapURL]];
     }
 
+    /**
+     * @inheritDoc
+     */
     public function remove(string $definition): void
     {
         foreach ($this->services as $key => $service) {
@@ -189,31 +279,52 @@ abstract class AbstractRdapService implements RdapServiceInterface
             if ($offset === false) {
                 continue;
             }
-            unset($this->services[$key][$offset]);
+            if (array_key_exists($offset, $this->services[$key])) {
+                unset($this->services[$key][$offset]);
+            }
+            if (empty($this->services[$key])) {
+                unset($this->services[$key]);
+                continue;
+            }
             $this->services[$key] = array_values($this->services[$key]);
         }
     }
 
+    /**
+     * @inheritDoc
+     */
     public function setVersion(string $version): void
     {
         $this->version = $version;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getVersion(): string
     {
         return $this->version;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function setDescription(string $description): void
     {
         $this->description = $description;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getDescription(): string
     {
         return $this->description;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function setPublication(DateTimeInterface $publication): void
     {
         if (!$publication instanceof DateTimeImmutable) {
@@ -223,13 +334,17 @@ abstract class AbstractRdapService implements RdapServiceInterface
         $this->publication = $publication;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getPublication(): DateTimeInterface
     {
         return $this->publication;
     }
 
     /**
-     * @throws Exception
+     * @throws \Exception
+     * @noinspection PhpFullyQualifiedNameUsageInspection
      */
     public static function fromURL(string $url) : static
     {
@@ -240,8 +355,9 @@ abstract class AbstractRdapService implements RdapServiceInterface
             if (is_dir(self::$tempDir) && is_writable(self::$tempDir)) {
                 $rdapDir = self::$tempDir .'/rdap-php';
                 if (!file_exists($rdapDir)) {
-                    set_error_handler(static function () {
+                    set_error_handler(static function (int $code, string $message, string $file, int $line) : bool {
                         error_clear_last();
+                        return true;
                     });
                     mkdir($rdapDir, 0755, true);
                     restore_error_handler();
@@ -249,7 +365,7 @@ abstract class AbstractRdapService implements RdapServiceInterface
                 $fileCache = $rdapDir . '/rdap-'. md5($url).'.json';
                 if (is_file($fileCache)
                     && is_readable($fileCache)
-                    && (filemtime($fileCache) + 3600) > time()
+                    && (filemtime($fileCache) + self::cacheExpirations()) > time()
                 ) {
                     $data = file_get_contents($fileCache);
                     $data = is_string($data)
@@ -261,6 +377,7 @@ abstract class AbstractRdapService implements RdapServiceInterface
                         && is_string($data['publication']??null)
                         && is_array($data['services']??null)
                     ) {
+                        // @phpstan-ignore-next-line
                         return new static(
                             $data['version'],
                             $data['description'],
@@ -274,11 +391,13 @@ abstract class AbstractRdapService implements RdapServiceInterface
                     }
                 }
                 $fileCache = ($isWritable??true) === true
-                    && is_writable(dirname($fileCache)) ? $fileCache : null;
+                && is_writable(dirname($fileCache)) ? $fileCache : null;
             }
         }
-
-        set_error_handler(static fn () => error_clear_last());
+        set_error_handler(static function (int $code, string $message, string $file, int $line) : bool {
+            error_clear_last();
+            return true;
+        });
         $content = file_get_contents(
             $url,
             false,
@@ -302,6 +421,7 @@ abstract class AbstractRdapService implements RdapServiceInterface
         if ($fileCache) {
             file_put_contents($fileCache, $content);
         }
+        // @phpstan-ignore-next-line
         return new static(
             $data['version'],
             $data['description'],
@@ -311,7 +431,8 @@ abstract class AbstractRdapService implements RdapServiceInterface
     }
 
     /**
-     * @throws Exception
+     * @throws \Exception
+     * @noinspection PhpFullyQualifiedNameUsageInspection
      */
     public static function fromFile(string $file) : static
     {
