@@ -7,13 +7,20 @@ use ArrayAccess\RdapClient\Util\CIDR;
 use function explode;
 use function is_array;
 use function is_numeric;
+use function reset;
 use function str_contains;
 use function str_starts_with;
 
 class Ipv6Service extends AbstractRdapService
 {
+    /**
+     * @var array<string, array{0: string, 1: string}|false> $cidrRanges The RDAP services
+     */
     private array $cidrRanges = [];
 
+    /**
+     * @inheritDoc
+     */
     protected function normalizeSource(string $target): string
     {
         $explode = explode('/', $target);
@@ -30,9 +37,12 @@ class Ipv6Service extends AbstractRdapService
         $this->throwInvalidTarget($target);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function normalize(string $target): ?string
     {
-        if (str_contains($target, ':')) {
+        if (!str_contains($target, ':')) {
             return null;
         }
         if (str_contains($target, '/')) {
@@ -45,6 +55,9 @@ class Ipv6Service extends AbstractRdapService
         return $target;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getRdapURL(string $target) : ?string
     {
         $target = $this->normalize($target);
@@ -52,19 +65,23 @@ class Ipv6Service extends AbstractRdapService
             return null;
         }
         [$start] = explode(':', $target);
-        $start .= ':';
+        // just take first character
+        // @previous: $start += ':';
+        // @patch
+        $start = $start[0];
         foreach ($this->services as $service) {
             $urls = $service[1]??[];
+            $service0 = $service[0]??[];
             $url = reset($urls);
-            if (!$url) {
+            if (!$url || empty($service0)) {
                 continue;
             }
-            foreach ($service[0] as $cidr) {
+            foreach ($service0 as $cidr) {
                 if (!str_starts_with($cidr, $start)) {
                     continue;
                 }
                 if (!isset($this->cidrRanges[$cidr])) {
-                    $this->cidrRanges[$cidr] = CIDR::ip6cidrToRange($cidr);
+                    $this->cidrRanges[$cidr] = CIDR::ip6cidrToRange($cidr)?:false;
                 }
                 if (!is_array($this->cidrRanges[$cidr])) {
                     continue;
