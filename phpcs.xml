@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ruleset name="TrayDigita Coding Standard" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="vendor/squizlabs/php_codesniffer/phpcs.xsd">
-    <description>Php RDAP-Client Coding Standard</description>
+<ruleset name="Coding Standard" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="vendor/squizlabs/php_codesniffer/phpcs.xsd">
+    <description>PSR2 Coding Standard</description>
     <!-- Display Progress -->
     <arg value="p"/>
     <!-- Show Ruleset -->
@@ -25,8 +25,24 @@
 
     <!-- Path To Check -->
     <file>src/</file>
+
     <!-- Slevomat Ruleset -->
     <config name="installed_paths" value="vendor/slevomat/coding-standard/SlevomatCodingStandard"/>
+    <!-- constant visibility -->
+    <rule ref="PSR12.Properties">
+        <properties>
+            <property name="UseSpacing" value="1"/>
+            <property name="ConstantVisibility" value="1"/>
+        </properties>
+    </rule>
+    <!-- constant visibility -->
+    <rule ref="PSR12.Properties">
+        <properties>
+            <property name="UseSpacing" value="1"/>
+            <property name="ConstantVisibility" value="1"/>
+            <property name="MethodVisibility" value="1"/>
+        </properties>
+    </rule>
     <!-- detect spacing -->
     <rule ref="SlevomatCodingStandard.Namespaces.UseSpacing">
         <properties>
@@ -51,7 +67,15 @@
             <property name="ignoreUnusedValuesWhenOnlyKeysAreUsedInForeach" value="true"/>
         </properties>
     </rule>
+    <!-- detect unused variables -->
+    <rule ref="SlevomatCodingStandard.Variables.UnusedVariable">
+        <properties>
+            <property name="ignoreUnusedValuesWhenOnlyKeysAreUsedInForeach" value="true"/>
+        </properties>
+    </rule>
     <!-- we use strict! disallow equal operator, use identical for better code -->
     <rule ref="SlevomatCodingStandard.Operators.DisallowEqualOperators"/>
+    <!-- detected unused use -->
+    <rule ref="SlevomatCodingStandard.Namespaces.UnusedUses"/>
 </ruleset>
-<!-- end -->
+        <!-- end -->
