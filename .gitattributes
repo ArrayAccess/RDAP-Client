@@ -1,0 +1,9 @@
+export-ignore composer.lock
+export-ignore composer.json
+export-ignore .gitignore
+export-ignore .gitattributes
+export-ignore .gitmodules
+export-ignore .git
+export-ignore phpcs.xml
+export-ignore phpcs.xml.dist
+export-ignore .phpstan-tmp
