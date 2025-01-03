@@ -30,9 +30,15 @@ use function trim;
 
 class Client implements RdapClientInterface
 {
-    const VERSION = '1.0.0';
+    /**
+     * @var string Version
+     */
+    public const VERSION = '1.0.1';
 
-    final const PROTOCOLS = [
+    /**
+     * @var array<string, class-string<RdapProtocolInterface>>
+     */
+    final public const PROTOCOLS = [
         self::IPV4 => IPv4Protocol::class,
         self::IPV6 => IPv6Protocol::class,
         self::ASN => AsnProtocol::class,
@@ -45,11 +51,24 @@ class Client implements RdapClientInterface
      */
     protected array $protocols = self::PROTOCOLS;
 
+    /**
+     * Check if protocol is supported
+     *
+     * @param string $protocolType
+     * @return bool
+     */
     public function hasProtocol(string $protocolType) : bool
     {
         return isset($this->protocols[$protocolType]);
     }
 
+    /**
+     * Set Protocol
+     *
+     * @param RdapProtocolInterface $protocol
+     * @return void
+     * @throws InvalidServiceDefinitionException if protocol is not supported
+     */
     public function setProtocol(RdapProtocolInterface $protocol): void
     {
         foreach (self::PROTOCOLS as $protocolVersion => $obj) {
@@ -66,6 +85,13 @@ class Client implements RdapClientInterface
         );
     }
 
+    /**
+     * Get Protocol
+     *
+     * @param string $protocolType
+     * @return RdapProtocolInterface
+     * @throws UnsupportedProtocolException if protocol is not supported
+     */
     public function getProtocol(string $protocolType) : RdapProtocolInterface
     {
         if (!isset($this->protocols[$protocolType])
@@ -83,6 +109,8 @@ class Client implements RdapClientInterface
     }
 
     /**
+     * Guess type of target
+     *
      * @param string $target
      * @return ?array{0:string, 1:string}
      */
@@ -140,6 +168,13 @@ class Client implements RdapClientInterface
         return [self::DOMAIN, $target];
     }
 
+    /**
+     * Get RDAP Request
+     *
+     * @param string|int $target
+     * @param string|null $protocol
+     * @return Interfaces\RdapRequestInterface|null
+     */
     public function request(string|int $target, ?string $protocol = null): ?Interfaces\RdapRequestInterface
     {
         if (is_int($target)) {
@@ -170,26 +205,56 @@ class Client implements RdapClientInterface
         return $object->find($target);
     }
 
+    /**
+     * Get Domain Request
+     *
+     * @param string $target
+     * @return Interfaces\RdapRequestInterface|null
+     */
     public function domain(string $target): ?Interfaces\RdapRequestInterface
     {
         return $this->request($target, self::DOMAIN);
     }
 
+    /**
+     * Get ASN Request
+     *
+     * @param string|int $target
+     * @return Interfaces\RdapRequestInterface|null
+     */
     public function asn(string|int $target): ?Interfaces\RdapRequestInterface
     {
         return $this->request($target, self::ASN);
     }
 
+    /**
+     * Get ipv4 Request
+     *
+     * @param string $target
+     * @return Interfaces\RdapRequestInterface|null
+     */
     public function ipv4(string $target): ?Interfaces\RdapRequestInterface
     {
         return $this->request($target, self::IPV4);
     }
 
+    /**
+     * Get IPv6 Request
+     *
+     * @param string $target
+     * @return Interfaces\RdapRequestInterface|null
+     */
     public function ipv6(string $target): ?Interfaces\RdapRequestInterface
     {
         return $this->request($target, self::IPV6);
     }
 
+    /**
+     * Get nameserver Request
+     *
+     * @param string $target
+     * @return Interfaces\RdapRequestInterface|null
+     */
     public function nameserver(string $target): ?Interfaces\RdapRequestInterface
     {
         return $this->request($target, self::NS);

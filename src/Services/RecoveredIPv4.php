@@ -8,7 +8,7 @@ namespace ArrayAccess\RdapClient\Services;
  */
 class RecoveredIPv4
 {
-    final const RECOVERED_IPS = [
+    final public const RECOVERED_IPS = [
         "https://rdap.apnic.net/" => [
             "43.236.0.0/26",
             "43.245.0.0/26",
