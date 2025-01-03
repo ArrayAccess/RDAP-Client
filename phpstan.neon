@@ -1,0 +1,11 @@
+parameters:
+  tmpDir: .phpstan-tmp
+  level: 8
+  ignoreErrors:
+  treatPhpDocTypesAsCertain: false
+  paths:
+    - src
+  fileExtensions:
+    - php
+  parallel:
+    maximumNumberOfProcesses: 1
