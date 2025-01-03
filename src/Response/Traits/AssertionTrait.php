@@ -17,12 +17,12 @@ use function sprintf;
 
 trait AssertionTrait
 {
-    private function determineAssertionType($item) : string
+    private function determineAssertionType(mixed $item) : string
     {
         return is_object($item) ? $item::class : gettype($item);
     }
 
-    private function assertArray($item, ?string $key = null): void
+    private function assertArray(mixed $item, ?string $key = null): void
     {
         if (!is_array($item)) {
             throw new InvalidDataTypeException(
@@ -38,7 +38,7 @@ trait AssertionTrait
         }
     }
 
-    private function assertString($item, ?string $key = null): void
+    private function assertString(mixed $item, ?string $key = null): void
     {
         if (!is_string($item)) {
             throw new InvalidDataTypeException(
@@ -54,7 +54,7 @@ trait AssertionTrait
         }
     }
 
-    private function assertNumeric($item, ?string $key = null): void
+    private function assertNumeric(mixed $item, ?string $key = null): void
     {
         if (!is_numeric($item)) {
             throw new InvalidDataTypeException(
@@ -70,7 +70,7 @@ trait AssertionTrait
         }
     }
 
-    private function assertInteger($item, ?string $key = null): void
+    private function assertInteger(mixed $item, ?string $key = null): void
     {
         if (!is_integer($item)) {
             throw new InvalidDataTypeException(
@@ -86,7 +86,7 @@ trait AssertionTrait
         }
     }
 
-    private function assertStringOrArray($item, ?string $key = null): void
+    private function assertStringOrArray(mixed $item, ?string $key = null): void
     {
         if (is_string($item) || is_array($item)) {
             return;
@@ -103,6 +103,11 @@ trait AssertionTrait
         );
     }
 
+    /**
+     * @param array<array-key, mixed> $item
+     * @param string|null $key
+     * @return void
+     */
     private function assertArrayStringValue(array $item, ?string $key = null): void
     {
         foreach ($item as $i) {
@@ -122,6 +127,11 @@ trait AssertionTrait
         }
     }
 
+    /**
+     * @param array<array-key, mixed> $item
+     * @param string|null $key
+     * @return void
+     */
     private function assertArrayBooleanValue(array $item, ?string $key = null): void
     {
         foreach ($item as $i) {
@@ -141,6 +151,11 @@ trait AssertionTrait
         }
     }
 
+    /**
+     * @param array<array-key, mixed> $item
+     * @param string|null $key
+     * @return void
+     */
     private function assertArrayStringKey(array $item, ?string $key = null): void
     {
         foreach ($item as $i => $value) {
@@ -160,7 +175,12 @@ trait AssertionTrait
         }
     }
 
-    private function assertBoolean($item, ?string $key = null): void
+    /**
+     * @param mixed $item
+     * @param string|null $key
+     * @return void
+     */
+    private function assertBoolean(mixed $item, ?string $key = null): void
     {
         if (!is_bool($item)) {
             throw new InvalidDataTypeException(
@@ -176,7 +196,13 @@ trait AssertionTrait
         }
     }
 
-    private function assertInstanceOf($item, string|object $instance, ?string $key = null): void
+    /**
+     * @param mixed $item
+     * @param string|object $instance
+     * @param string|null $key
+     * @return void
+     */
+    private function assertInstanceOf(mixed $item, string|object $instance, ?string $key = null): void
     {
         $instance = is_object($instance) ? $instance::class : $instance;
         if (!is_a($item, $instance)) {
@@ -195,7 +221,13 @@ trait AssertionTrait
         }
     }
 
-    private function assertEqual($item, $expected, ?string $key = null): void
+    /**
+     * @param mixed $item
+     * @param mixed $expected
+     * @param string|null $key
+     * @return void
+     */
+    private function assertEqual(mixed $item, mixed $expected, ?string $key = null): void
     {
         if ($item !== $expected) {
             throw new MismatchDataBehaviorException(
@@ -209,6 +241,12 @@ trait AssertionTrait
         }
     }
 
+    /**
+     * @param array<array-key, mixed> $item
+     * @param int $expected
+     * @param string|null $key
+     * @return void
+     */
     private function assertCount(array $item, int $expected, ?string $key = null) : void
     {
         if (($count = count($item)) !== $expected) {
@@ -225,6 +263,12 @@ trait AssertionTrait
         }
     }
 
+    /**
+     * @param array<array-key, mixed> $item
+     * @param int $expected
+     * @param string|null $key
+     * @return void
+     */
     private function assertCountGreaterThan(array $item, int $expected, ?string $key = null) : void
     {
         if (($count = count($item)) > $expected) {
@@ -242,6 +286,12 @@ trait AssertionTrait
         );
     }
 
+    /**
+     * @param array<array-key, mixed> $item
+     * @param int $expected
+     * @param string|null $key
+     * @return void
+     */
     private function assertCountGreaterOrEqual(array $item, int $expected, ?string $key = null) : void
     {
         if (($count = count($item)) >= $expected) {
