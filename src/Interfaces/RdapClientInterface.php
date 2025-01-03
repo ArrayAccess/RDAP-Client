@@ -5,9 +5,9 @@ namespace ArrayAccess\RdapClient\Interfaces;
 
 interface RdapClientInterface
 {
-    const IPV4 = 'ipv4';
-    const IPV6 = 'ipv46';
-    const DOMAIN = 'domain';
-    const NS = 'ns';
-    const ASN = 'asn';
+    public const IPV4 = 'ipv4';
+    public const IPV6 = 'ipv46';
+    public const DOMAIN = 'domain';
+    public const NS = 'ns';
+    public const ASN = 'asn';
 }
