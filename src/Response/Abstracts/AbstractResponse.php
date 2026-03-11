@@ -5,6 +5,7 @@ namespace ArrayAccess\RdapClient\Response\Abstracts;
 
 use ArrayAccess\RdapClient\Exceptions\InvalidDataTypeException;
 use ArrayAccess\RdapClient\Exceptions\MismatchProtocolBehaviorException;
+use ArrayAccess\RdapClient\Exceptions\RdapResponseException;
 use ArrayAccess\RdapClient\Interfaces\RdapProtocolInterface;
 use ArrayAccess\RdapClient\Interfaces\RdapRequestInterface;
 use ArrayAccess\RdapClient\Interfaces\RdapResponseInterface;
@@ -67,19 +68,42 @@ abstract class AbstractResponse implements RdapResponseInterface
     }
 
     /**
-     * Assert response
+     * Assert that the raw JSON response is valid and populate internal
+     * array representation.
+     *
      * @param string $responseJson
      * @return void
+     *
+     * @throws InvalidDataTypeException when the content cannot be decoded or
+     *         does not contain any of the required fields: objectClassName,
+     *         rdapConformance, or errorCode.
+     * @throws RdapResponseException  when the payload represents an error
+     *         response (``errorCode`` field present).  The returned exception
+     *         may be inspected via {@see RdapResponseException::getResponse()}
+     *         for the full payload; its message and code are derived from the
+     *         `title`/`description`/`errorCode` fields.
      */
     private function assertResponse(string $responseJson): void
     {
-        $responseJson = json_decode($responseJson, true);
-        if (!is_array($responseJson) || !is_string($responseJson['objectClassName']??null)) {
+        $decoded = json_decode($responseJson, true);
+        
+        if (!is_array($decoded) ||
+            (!isset($decoded['objectClassName']) &&
+             !isset($decoded['rdapConformance']) &&
+             !isset($decoded['errorCode']))
+        ) {
             throw new InvalidDataTypeException(
                 'Response is not valid json content'
             );
         }
-        $this->responseArray = $responseJson;
+
+        if (isset($decoded['errorCode'])) {
+            // convert immediately into an exception; no need to validate
+            // required fields for error payloads.
+            throw RdapResponseException::fromResponse($decoded);
+        }
+
+        $this->responseArray = $decoded;
     }
 
     /**

@@ -46,8 +46,11 @@ interface RdapRequestInterface
 
     /**
      * Get RDAP Response
-     *
+     * 
      * @return RdapResponseInterface
+     *
+     * @throws \ArrayAccess\RdapClient\Exceptions\RdapRemoteRequestException
+     * @throws \ArrayAccess\RdapClient\Exceptions\RdapResponseException
      */
     public function getResponse() : RdapResponseInterface;
 
