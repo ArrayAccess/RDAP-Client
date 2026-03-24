@@ -46,7 +46,7 @@ interface RdapRequestInterface
 
     /**
      * Get RDAP Response
-     * 
+     *
      * @return RdapResponseInterface
      *
      * @throws \ArrayAccess\RdapClient\Exceptions\RdapRemoteRequestException
