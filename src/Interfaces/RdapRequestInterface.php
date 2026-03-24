@@ -58,7 +58,7 @@ interface RdapRequestInterface
      * Close the RDAP request
      *
      * @param string $url
-     * @return $this
+     * @return static
      */
     public function withRdapSearchURL(string $url) : static;
 
