@@ -1,10 +1,13 @@
 <?php
-
 declare(strict_types=1);
 
 namespace ArrayAccess\RdapClient\Exceptions;
 
 use RuntimeException;
+use function array_filter;
+use function implode;
+use function is_array;
+use function is_string;
 
 /**
  * Thrown when the remote RDAP server returns an error response payload.
@@ -82,4 +85,3 @@ class RdapResponseException extends RuntimeException
         return $this->response;
     }
 }
-
