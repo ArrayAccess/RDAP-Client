@@ -12,7 +12,6 @@ use ArrayAccess\RdapClient\Interfaces\RdapResponseInterface;
 use ArrayAccess\RdapClient\Response\Traits\AllowedKeyDataTraits;
 use function get_class;
 use function is_array;
-use function is_string;
 use function json_decode;
 use function sprintf;
 
@@ -86,11 +85,11 @@ abstract class AbstractResponse implements RdapResponseInterface
     private function assertResponse(string $responseJson): void
     {
         $decoded = json_decode($responseJson, true);
-        
+
         if (!is_array($decoded) ||
             (!isset($decoded['objectClassName']) &&
-             !isset($decoded['rdapConformance']) &&
-             !isset($decoded['errorCode']))
+                !isset($decoded['rdapConformance']) &&
+                !isset($decoded['errorCode']))
         ) {
             throw new InvalidDataTypeException(
                 'Response is not valid json content'
