@@ -10,7 +10,6 @@ use ArrayAccess\RdapClient\Interfaces\RdapServiceInterface;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use function array_key_exists;
 use function array_keys;
 use function array_merge;
 use function array_search;
@@ -279,15 +278,14 @@ abstract class AbstractRdapService implements RdapServiceInterface
             if ($offset === false) {
                 continue;
             }
-            if (array_key_exists($offset, $this->services[$key])) {
-                unset($this->services[$key][$offset]);
-            }
-            if (empty($this->services[$key])) {
+            unset($this->services[$key][0][$offset]);
+            if (empty($this->services[$key][0])) {
                 unset($this->services[$key]);
                 continue;
             }
-            $this->services[$key] = array_values($this->services[$key]);
+            $this->services[$key][0] = array_values($this->services[$key][0]);
         }
+        $this->services = array_values($this->services);
     }
 
     /**
