@@ -211,8 +211,8 @@ class Client implements RdapClientInterface, RdapHttpClientAwareInterface
     {
         foreach (self::PROTOCOLS as $protocolVersion => $obj) {
             if (is_a($protocol, $obj)) {
-                $this->protocols[$protocolVersion] = $obj;
-                break;
+                $this->protocols[$protocolVersion] = $protocol;
+                return;
             }
         }
         throw new InvalidServiceDefinitionException(
