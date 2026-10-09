@@ -45,7 +45,7 @@ class DomainProtocol extends AbstractRdapProtocol
     public function getService(): DomainService
     {
         if (!isset($this->services) || !($this->services instanceof DomainService)) {
-            $this->services = DomainService::fromURL(self::DOMAIN_URI);
+            $this->services = $this->loadService(DomainService::class, self::DOMAIN_URI);
         }
         return $this->services;
     }

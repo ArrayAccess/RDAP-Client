@@ -5,6 +5,7 @@ namespace ArrayAccess\RdapClient\Protocols;
 
 use ArrayAccess\RdapClient\Exceptions\MismatchProtocolBehaviorException;
 use ArrayAccess\RdapClient\Exceptions\RdapRemoteRequestException;
+use ArrayAccess\RdapClient\Interfaces\RdapHttpClientAwareInterface;
 use ArrayAccess\RdapClient\Interfaces\RdapProtocolInterface;
 use ArrayAccess\RdapClient\Interfaces\RdapRequestInterface;
 use ArrayAccess\RdapClient\Interfaces\RdapResponseInterface;
@@ -157,6 +158,17 @@ class RdapRequestProtocol implements RdapRequestInterface
                 $this->errorMessage??'',
                 $this->errorCode
             );
+        }
+        $client = $this->getProtocol()->getClient();
+        if ($client instanceof RdapHttpClientAwareInterface && $client->getHttpClient() !== null) {
+            try {
+                $content = $client->fetch($this->rdapSearchURL);
+            } catch (RdapRemoteRequestException $e) {
+                $this->errorCode = $e->getCode();
+                $this->errorMessage = $e->getMessage();
+                throw $e;
+            }
+            return $this->response = $this->protocol->createResponse($content, $this);
         }
         set_error_handler(function (int $code, string $message, string $file, int $line) : bool {
             $this->errorCode = $code;
