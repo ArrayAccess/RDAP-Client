@@ -394,7 +394,9 @@ abstract class AbstractRdapService implements RdapServiceInterface
                 && is_writable(dirname($fileCache)) ? $fileCache : null;
             }
         }
-        set_error_handler(static function (int $code, string $message, string $file, int $line) : bool {
+        $errorMessage = null;
+        set_error_handler(static function (int $code, string $message) use (&$errorMessage) : bool {
+            $errorMessage ??= $message;
             error_clear_last();
             return true;
         });
@@ -406,8 +408,17 @@ abstract class AbstractRdapService implements RdapServiceInterface
             ) : null
         );
         restore_error_handler();
+        if (!is_string($content)) {
+            throw new InvalidServiceDefinitionException(
+                sprintf(
+                    'Could not fetch protocol service URL "%s": %s',
+                    $url,
+                    $errorMessage ?? 'unknown error'
+                )
+            );
+        }
 
-        $service = static::fromJson(is_string($content) ? $content : '', $url);
+        $service = static::fromJson($content, $url);
         if ($fileCache) {
             file_put_contents($fileCache, $content);
         }
