@@ -47,7 +47,7 @@ class IPv6Protocol extends AbstractIPProtocol
     public function getService(): Ipv6Service
     {
         if (!isset($this->services) || !($this->services instanceof Ipv6Service)) {
-            $this->services = Ipv6Service::fromURL(self::IPV6_URI);
+            $this->services = $this->loadService(Ipv6Service::class, self::IPV6_URI);
         }
         return $this->services;
     }

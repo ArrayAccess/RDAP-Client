@@ -109,6 +109,28 @@ $response = $newRequest->getResponse();
 
 See [Response/Definitions](src/Response/Definitions) for more details about code
 
+### Using your own HTTP client and cache
+
+By default, requests are made with `file_get_contents()` and the IANA bootstrap files are cached in the system temporary directory.
+
+The client optionally accepts a [PSR-18](https://www.php-fig.org/psr/psr-18/) HTTP client, a [PSR-17](https://www.php-fig.org/psr/psr-17/) request factory and a [PSR-16](https://www.php-fig.org/psr/psr-16/) cache. The HTTP client is used for both the bootstrap files and the RDAP queries, so timeouts, proxies, retries and logging follow your application's configuration. The cache stores the bootstrap files for `AbstractRdapService::cacheExpirations()` seconds.
+
+```php
+use ArrayAccess\RdapClient\Client;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Component\Cache\Psr16Cache;
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\HttpClient\Psr18Client;
+
+// Psr18Client is also a request factory, so the second argument can be omitted
+$httpClient = new Psr18Client(HttpClient::create(['timeout' => 5]));
+$cache = new Psr16Cache(new FilesystemAdapter());
+$client = new Client($httpClient, null, $cache);
+
+// any PSR-18 client works, e.g. Guzzle with a PSR-17 factory
+$client = new Client(new \GuzzleHttp\Client(['timeout' => 5]), new \GuzzleHttp\Psr7\HttpFactory());
+```
+
 
 ## Note
 

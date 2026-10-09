@@ -47,7 +47,7 @@ class IPv4Protocol extends AbstractIPProtocol
     public function getService(): Ipv4Service
     {
         if (!isset($this->services) || !($this->services instanceof Ipv4Service)) {
-            $this->services = Ipv4Service::fromURL(self::IPV4_URI);
+            $this->services = $this->loadService(Ipv4Service::class, self::IPV4_URI);
         }
         return $this->services;
     }

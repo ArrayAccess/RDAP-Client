@@ -46,7 +46,7 @@ class NsProtocol extends AbstractRdapProtocol
     public function getService(): NsService
     {
         if (!isset($this->services) || !($this->services instanceof NsService)) {
-            $this->services = NsService::fromURL(self::NS_URI);
+            $this->services = $this->loadService(NsService::class, self::NS_URI);
         }
         return $this->services;
     }

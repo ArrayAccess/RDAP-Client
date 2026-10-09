@@ -5,9 +5,12 @@ namespace ArrayAccess\RdapClient;
 
 use ArrayAccess\RdapClient\Exceptions\EmptyArgumentException;
 use ArrayAccess\RdapClient\Exceptions\InvalidServiceDefinitionException;
+use ArrayAccess\RdapClient\Exceptions\RdapRemoteRequestException;
 use ArrayAccess\RdapClient\Exceptions\UnsupportedProtocolException;
 use ArrayAccess\RdapClient\Interfaces\RdapClientInterface;
+use ArrayAccess\RdapClient\Interfaces\RdapHttpClientAwareInterface;
 use ArrayAccess\RdapClient\Interfaces\RdapProtocolInterface;
+use ArrayAccess\RdapClient\Interfaces\RdapRequestInterface;
 use ArrayAccess\RdapClient\Protocols\AsnProtocol;
 use ArrayAccess\RdapClient\Protocols\DomainProtocol;
 use ArrayAccess\RdapClient\Protocols\IPv4Protocol;
@@ -15,20 +18,30 @@ use ArrayAccess\RdapClient\Protocols\IPv6Protocol;
 use ArrayAccess\RdapClient\Protocols\NsProtocol;
 use ArrayAccess\RdapClient\Services\AsnService;
 use ArrayAccess\RdapClient\Util\CIDR;
+use InvalidArgumentException;
+use Psr\Http\Client\ClientExceptionInterface;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestFactoryInterface;
+use Psr\SimpleCache\CacheInterface;
 use function explode;
+use function file_get_contents;
 use function idn_to_ascii;
 use function is_a;
 use function is_array;
 use function is_int;
 use function is_object;
+use function is_string;
 use function preg_match;
+use function restore_error_handler;
+use function set_error_handler;
 use function sprintf;
 use function str_contains;
+use function stream_context_create;
 use function strlen;
 use function strtolower;
 use function trim;
 
-class Client implements RdapClientInterface
+class Client implements RdapClientInterface, RdapHttpClientAwareInterface
 {
     /**
      * @var string Version
@@ -50,6 +63,131 @@ class Client implements RdapClientInterface
      * @var array<class-string<RdapProtocolInterface>|RdapProtocolInterface>
      */
     protected array $protocols = self::PROTOCOLS;
+
+    /**
+     * @var RequestFactoryInterface|null $requestFactory The PSR-17 request factory
+     */
+    protected ?RequestFactoryInterface $requestFactory;
+
+    /**
+     * Constructor
+     *
+     * Without arguments, requests are made with file_get_contents() and the
+     * IANA bootstrap files are cached in the system temporary directory.
+     *
+     * @param ClientInterface|null $httpClient PSR-18 client used for bootstrap and RDAP requests
+     * @param RequestFactoryInterface|null $requestFactory PSR-17 request factory,
+     *      optional when the HTTP client also implements RequestFactoryInterface
+     * @param CacheInterface|null $cache PSR-16 cache for the IANA bootstrap files
+     * @throws InvalidArgumentException if an HTTP client is given without a request factory
+     */
+    public function __construct(
+        protected ?ClientInterface $httpClient = null,
+        ?RequestFactoryInterface $requestFactory = null,
+        protected ?CacheInterface $cache = null
+    ) {
+        if ($requestFactory === null && $httpClient instanceof RequestFactoryInterface) {
+            $requestFactory = $httpClient;
+        }
+        if ($httpClient !== null && $requestFactory === null) {
+            throw new InvalidArgumentException(
+                'A PSR-17 request factory is required when using a PSR-18 HTTP client'
+            );
+        }
+        $this->requestFactory = $requestFactory;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getHttpClient() : ?ClientInterface
+    {
+        return $this->httpClient;
+    }
+
+    /**
+     * Get the PSR-17 request factory
+     *
+     * @return RequestFactoryInterface|null
+     */
+    public function getRequestFactory() : ?RequestFactoryInterface
+    {
+        return $this->requestFactory;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getCache() : ?CacheInterface
+    {
+        return $this->cache;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function fetch(string $url) : string
+    {
+        if ($this->httpClient === null || $this->requestFactory === null) {
+            return $this->fetchWithStream($url);
+        }
+
+        $request = $this->requestFactory
+            ->createRequest('GET', $url)
+            ->withHeader('Accept', 'application/rdap+json,application/json;q=0.9,*/*;q=0.8')
+            ->withHeader('User-Agent', 'Rdap-Client/' . self::VERSION);
+        try {
+            $response = $this->httpClient->sendRequest($request);
+        } catch (ClientExceptionInterface $e) {
+            throw new RdapRemoteRequestException(
+                $e->getMessage(),
+                (int) $e->getCode(),
+                $e
+            );
+        }
+
+        $content = (string) $response->getBody();
+        if ($content === '') {
+            throw new RdapRemoteRequestException(
+                sprintf('Could not get RDAP response from %s', $url),
+                $response->getStatusCode()
+            );
+        }
+        return $content;
+    }
+
+    /**
+     * Fetch the body of the given URL with file_get_contents()
+     *
+     * @param string $url
+     * @return string
+     * @throws RdapRemoteRequestException
+     */
+    protected function fetchWithStream(string $url) : string
+    {
+        $errorCode = 0;
+        $errorMessage = null;
+        set_error_handler(
+            static function (int $code, string $message) use (&$errorCode, &$errorMessage) : bool {
+                $errorCode = $code;
+                $errorMessage = $message;
+                return true;
+            }
+        );
+        $content = file_get_contents(
+            $url,
+            false,
+            stream_context_create(RdapRequestInterface::DEFAULT_STREAM_CONTEXT)
+        );
+        restore_error_handler();
+        if (!is_string($content) || $content === '') {
+            throw new RdapRemoteRequestException(
+                $errorMessage ?? sprintf('Could not get RDAP response from %s', $url),
+                $errorCode
+            );
+        }
+        return $content;
+    }
 
     /**
      * Check if protocol is supported

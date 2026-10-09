@@ -407,7 +407,26 @@ abstract class AbstractRdapService implements RdapServiceInterface
         );
         restore_error_handler();
 
-        $data = is_string($content) ? json_decode($content, true) : null;
+        $service = static::fromJson(is_string($content) ? $content : '', $url);
+        if ($fileCache) {
+            file_put_contents($fileCache, $content);
+        }
+        return $service;
+    }
+
+    /**
+     * Create a new instance from the content of an IANA bootstrap file
+     *
+     * @param string $json
+     * @param string $source The URL or file the content came from, used in the exception message
+     * @return static
+     * @throws InvalidServiceDefinitionException if the content is not a valid bootstrap file
+     * @throws \Exception
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     */
+    public static function fromJson(string $json, string $source = 'JSON') : static
+    {
+        $data = json_decode($json, true);
         if (!is_array($data)
             || !is_string($data['version']??null)
             || !is_string($data['description']??null)
@@ -415,11 +434,8 @@ abstract class AbstractRdapService implements RdapServiceInterface
             || !is_array($data['services']??null)
         ) {
             throw new InvalidServiceDefinitionException(
-                sprintf('Protocol service URL "%s" return invalid data', $url)
+                sprintf('Protocol service URL "%s" return invalid data', $source)
             );
-        }
-        if ($fileCache) {
-            file_put_contents($fileCache, $content);
         }
         // @phpstan-ignore-next-line
         return new static(
