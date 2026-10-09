@@ -65,6 +65,13 @@ class Client implements RdapClientInterface, RdapHttpClientAwareInterface
     protected array $protocols = self::PROTOCOLS;
 
     /**
+     * @var array<string, string> Protocol type aliases, kept for backwards compatibility
+     */
+    private const PROTOCOL_ALIASES = [
+        'ipv46' => self::IPV6,
+    ];
+
+    /**
      * @var RequestFactoryInterface|null $requestFactory The PSR-17 request factory
      */
     protected ?RequestFactoryInterface $requestFactory;
@@ -197,7 +204,7 @@ class Client implements RdapClientInterface, RdapHttpClientAwareInterface
      */
     public function hasProtocol(string $protocolType) : bool
     {
-        return isset($this->protocols[$protocolType]);
+        return isset($this->protocols[self::PROTOCOL_ALIASES[$protocolType] ?? $protocolType]);
     }
 
     /**
@@ -237,6 +244,7 @@ class Client implements RdapClientInterface, RdapHttpClientAwareInterface
         ) {
             $protocolType = strtolower(trim($protocolType));
         }
+        $protocolType = self::PROTOCOL_ALIASES[strtolower(trim($protocolType))] ?? $protocolType;
         if (isset($this->protocols[$protocolType])) {
             if (!is_object($this->protocols[$protocolType])) {
                 $this->protocols[$protocolType] = new $this->protocols[$protocolType]($this);
