@@ -116,7 +116,7 @@ abstract class AbstractRdapProtocol implements RdapProtocolInterface
         }
 
         if (str_contains($url, '#')) {
-            [$url] = explode('?', $url);
+            [$url] = explode('#', $url);
         }
         if (str_contains($url, '?')) {
             [$url] = explode('?', $url);
